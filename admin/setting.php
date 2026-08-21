@@ -44,6 +44,14 @@ $options = $general->get_options('AI');
 			<label for="openai_base_url">Endpoint</label>
 			<input type="text" class="form-control" name="openai_base_url" id="openai_base_url" value="<?php if (isset($options['openai_base_url']) AND !empty($options['openai_base_url'])) {echo htmlspecialchars_decode($options['openai_base_url'],ENT_QUOTES);} else {echo 'https://api.openai.com/v1/chat/completions';} ?>" />
 		  </div>
+		  <div class="form-group">
+			<label for="openai_image_model">Image Model</label>
+			<input type="text" class="form-control" name="openai_image_model" id="openai_image_model" value="<?php if (isset($options['openai_image_model']) AND !empty($options['openai_image_model'])) {echo htmlspecialchars_decode($options['openai_image_model'],ENT_QUOTES);} else {echo 'gpt-image-1';} ?>" />
+		  </div>
+		  <div class="form-group">
+			<label for="openai_image_endpoint">Image Endpoint</label>
+			<input type="text" class="form-control" name="openai_image_endpoint" id="openai_image_endpoint" value="<?php if (isset($options['openai_image_endpoint']) AND !empty($options['openai_image_endpoint'])) {echo htmlspecialchars_decode($options['openai_image_endpoint'],ENT_QUOTES);} else {echo 'https://api.openai.com/v1/images/generations';} ?>" />
+		  </div>
 		  <button type="submit" name="save" class="btn btn-primary">Save</button>
 		</form>
 

@@ -12,5 +12,7 @@ $db_config = array(
 $ai_config = array(
 	'api_key' => '',
 	'model' => 'gpt-4o-mini',
-	'base_url' => 'https://api.openai.com/v1/chat/completions'
+	'base_url' => 'https://api.openai.com/v1/chat/completions',
+	'image_model' => 'gpt-image-1',
+	'image_base_url' => 'https://api.openai.com/v1/images/generations'
 );

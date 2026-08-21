@@ -358,6 +358,212 @@ function rss_generate_article_with_ai($topic, $word_count, $language, $required_
 }
 }
 
+if (!function_exists('rss_ai_base_root')) {
+function rss_ai_base_root($endpoint) {
+	$endpoint = trim((string) $endpoint);
+	if ($endpoint === '') {
+		return '';
+	}
+	$endpoint = preg_replace('#/chat/completions/?$#i', '', $endpoint);
+	$endpoint = preg_replace('#/images/generations/?$#i', '', $endpoint);
+	return rtrim($endpoint, '/');
+}
+}
+
+if (!function_exists('rss_generate_image_with_ai')) {
+function rss_generate_image_with_ai($prompt, &$error_message = '') {
+	global $ai_config;
+	global $general;
+
+	$ai_options = array();
+	if ($general && method_exists($general,'get_options')) {
+		$ai_options = $general->get_options('AI');
+	}
+
+	$api_key = getenv('OPENAI_API_KEY');
+	if (($api_key === false || trim($api_key) === '') && isset($ai_options['openai_api_key'])) {
+		$api_key = (string) $ai_options['openai_api_key'];
+	}
+	if (($api_key === false || trim($api_key) === '') && isset($ai_config['api_key'])) {
+		$api_key = (string) $ai_config['api_key'];
+	}
+	if ($api_key === false || trim($api_key) === '') {
+		$error_message = 'API key is not configured.';
+		return false;
+	}
+
+	$image_model = getenv('OPENAI_IMAGE_MODEL');
+	if (($image_model === false || trim($image_model) === '') && isset($ai_options['openai_image_model'])) {
+		$image_model = (string) $ai_options['openai_image_model'];
+	}
+	if (($image_model === false || trim($image_model) === '') && isset($ai_config['image_model'])) {
+		$image_model = (string) $ai_config['image_model'];
+	}
+	if ($image_model === false || trim($image_model) === '') {
+		$image_model = 'gpt-image-1';
+	}
+
+	$endpoint = getenv('OPENAI_IMAGE_ENDPOINT');
+	if (($endpoint === false || trim($endpoint) === '') && isset($ai_options['openai_image_endpoint'])) {
+		$endpoint = (string) $ai_options['openai_image_endpoint'];
+	}
+	if (($endpoint === false || trim($endpoint) === '') && isset($ai_config['image_base_url'])) {
+		$endpoint = (string) $ai_config['image_base_url'];
+	}
+	if ($endpoint === false || trim($endpoint) === '') {
+		$chat_endpoint = '';
+		if (isset($ai_options['openai_base_url'])) {
+			$chat_endpoint = (string) $ai_options['openai_base_url'];
+		}
+		if ($chat_endpoint === '' && isset($ai_config['base_url'])) {
+			$chat_endpoint = (string) $ai_config['base_url'];
+		}
+		$root = rss_ai_base_root($chat_endpoint);
+		if ($root === '') {
+			$root = 'https://api.openai.com/v1';
+		}
+		$endpoint = $root . '/images/generations';
+	}
+
+	$payload = array(
+		'model' => $image_model,
+		'prompt' => trim((string) $prompt),
+		'size' => '1024x1024'
+	);
+
+	$ch = curl_init($endpoint);
+	if ($ch === false) {
+		$error_message = 'Could not initialize cURL for image generation.';
+		return false;
+	}
+
+	curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+	curl_setopt($ch, CURLOPT_POST, true);
+	curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+		'Content-Type: application/json',
+		'Authorization: Bearer ' . $api_key
+	));
+	curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
+	curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 15);
+	curl_setopt($ch, CURLOPT_TIMEOUT, 120);
+
+	$response = curl_exec($ch);
+	$curl_error = curl_error($ch);
+	$http_code = intval(curl_getinfo($ch, CURLINFO_HTTP_CODE));
+	curl_close($ch);
+
+	if ($response === false) {
+		$error_message = 'Image request failed: ' . $curl_error;
+		return false;
+	}
+
+	$data = json_decode($response, true);
+	if (!is_array($data)) {
+		$error_message = 'Image API returned an invalid response.';
+		return false;
+	}
+
+	if ($http_code >= 400) {
+		$api_error = '';
+		if (isset($data['error']['message'])) {
+			$api_error = $data['error']['message'];
+		}
+		$error_message = 'Image API error (' . $http_code . '): ' . $api_error;
+		return false;
+	}
+
+	if (isset($data['data'][0]['b64_json']) && trim((string) $data['data'][0]['b64_json']) !== '') {
+		$binary = base64_decode((string) $data['data'][0]['b64_json'], true);
+		if ($binary !== false && strlen($binary) > 0) {
+			return $binary;
+		}
+	}
+
+	if (isset($data['data'][0]['url']) && trim((string) $data['data'][0]['url']) !== '') {
+		$image_url = trim((string) $data['data'][0]['url']);
+		$ch = curl_init($image_url);
+		if ($ch !== false) {
+			curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+			curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 15);
+			curl_setopt($ch, CURLOPT_TIMEOUT, 90);
+			$binary = curl_exec($ch);
+			curl_close($ch);
+			if ($binary !== false && strlen($binary) > 0) {
+				return $binary;
+			}
+		}
+	}
+
+	$error_message = 'Image API returned no image data.';
+	return false;
+}
+}
+
+if (!function_exists('rss_save_generated_news_image')) {
+function rss_save_generated_news_image($binary, $prefix, &$error_message = '', $article_id = 0, $is_middle = false) {
+	$binary = (string) $binary;
+	if ($binary === '') {
+		$error_message = 'Generated image bytes are empty.';
+		return '';
+	}
+
+	if ($is_middle) {
+		$dir = rss_middle_image_dir();
+		if ($article_id > 0) {
+			rss_delete_middle_image($article_id);
+		}
+	} else {
+		$dir = '../upload/news/';
+	}
+
+	if (!is_dir($dir)) {
+		@mkdir($dir, 0755, true);
+	}
+	if (!is_dir($dir)) {
+		$error_message = 'Could not create image directory.';
+		return '';
+	}
+
+	$base_name = $prefix . '_' . time() . '_' . mt_rand(1000,9999);
+	if ($is_middle && $article_id > 0) {
+		$base_name = intval($article_id) . '_' . time() . '_' . mt_rand(1000,9999);
+	}
+
+	$image = false;
+	if (function_exists('imagecreatefromstring')) {
+		$image = @imagecreatefromstring($binary);
+	}
+
+	if ($image !== false && function_exists('imagewebp')) {
+		if (function_exists('imagepalettetotruecolor')) {
+			@imagepalettetotruecolor($image);
+		}
+		imagealphablending($image, true);
+		imagesavealpha($image, true);
+		$filename = $base_name . '.webp';
+		$target = $dir . $filename;
+		$saved = @imagewebp($image, $target, 82);
+		imagedestroy($image);
+		if ($saved) {
+			return $filename;
+		}
+	}
+
+	if ($image !== false) {
+		imagedestroy($image);
+	}
+
+	$filename = $base_name . '.png';
+	$target = $dir . $filename;
+	if (@file_put_contents($target, $binary) === false) {
+		$error_message = 'Could not save generated image file.';
+		return '';
+	}
+
+	return $filename;
+}
+}
+
 $max_article_image_bytes = 12 * 1024 * 1024;
 $post_max_bytes = rss_parse_size_to_bytes(ini_get('post_max_size'));
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($_POST) && !empty($_SERVER['CONTENT_LENGTH']) && ((int) $_SERVER['CONTENT_LENGTH'] > 0)) {
@@ -378,6 +584,8 @@ $ai_topic = isset($_POST['ai_topic']) ? trim((string) $_POST['ai_topic']) : '';
 $ai_words = isset($_POST['ai_words']) ? intval($_POST['ai_words']) : 700;
 $ai_language = isset($_POST['ai_language']) ? trim((string) $_POST['ai_language']) : 'Portuguese';
 $ai_required_terms_links = isset($_POST['ai_required_terms_links']) ? trim((string) $_POST['ai_required_terms_links']) : '';
+$ai_image_prompt = isset($_POST['ai_image_prompt']) ? trim((string) $_POST['ai_image_prompt']) : '';
+$ai_generate_images = isset($_POST['ai_generate_images']) ? 1 : 0;
 if ($ai_words <= 0) {
 $ai_words = 700;
 }
@@ -457,6 +665,40 @@ $message = notification('warning','Title is too long. Maximum supported size is 
 } elseif (!empty($upload_error)) {
 $message = notification('warning',$upload_error);
 } else {
+$is_editorial_category = rss_is_editorial_category($category_id,$general);
+	$generated_thumbnail_error = '';
+	$generated_middle_error = '';
+	$generated_middle_bytes = '';
+	if ($ai_generate_images == 1 && $thumbnail === '') {
+		$image_subject = $ai_image_prompt;
+		if ($image_subject === '') {
+			$image_subject = htmlspecialchars_decode($title,ENT_QUOTES);
+		}
+		if ($image_subject === '') {
+			$image_subject = $ai_topic;
+		}
+		if ($image_subject === '') {
+			$image_subject = 'missing person awareness in the United States';
+		}
+
+		$cover_prompt = 'Create a photorealistic editorial cover image about: ' . $image_subject . '. No text, no logos, no watermarks.';
+		$cover_bytes = rss_generate_image_with_ai($cover_prompt, $generated_thumbnail_error);
+		if ($cover_bytes !== false) {
+			$saved_thumbnail = rss_save_generated_news_image($cover_bytes, 'ai-cover', $generated_thumbnail_error, 0, false);
+			if ($saved_thumbnail !== '') {
+				$thumbnail = $saved_thumbnail;
+			}
+		}
+
+		if ($is_editorial_category) {
+			$middle_prompt = 'Create a second photorealistic supporting image about: ' . $image_subject . '. Different scene from the cover, no text, no logos, no watermarks.';
+			$middle_bytes = rss_generate_image_with_ai($middle_prompt, $generated_middle_error);
+			if ($middle_bytes !== false) {
+				$generated_middle_bytes = $middle_bytes;
+			}
+		}
+	}
+
 $datetime = time();
 $day = date('j');
 $month = date('n');
@@ -466,19 +708,31 @@ $sql = "INSERT INTO news (title,details,permalink,source_id,category_id,thumbnai
 $query = $mysqli->query($sql);
 if ($query) {
 $article_id = intval($mysqli->insert_id);
-$is_editorial_category = rss_is_editorial_category($category_id,$general);
 $middle_image_error = '';
 if ($is_editorial_category && !empty($_FILES['middle_image']['name'])) {
 	rss_store_middle_image($_FILES['middle_image'],$article_id,$max_article_image_bytes,$middle_image_error);
 }
+if ($is_editorial_category && empty($_FILES['middle_image']['name']) && $generated_middle_bytes !== '') {
+	rss_save_generated_news_image($generated_middle_bytes, 'ai-middle', $middle_image_error, $article_id, true);
+}
 if (!$is_editorial_category && !empty($_FILES['middle_image']['name'])) {
 	$middle_image_error = 'Middle image was ignored because this category is not Explained/Cases & Stories.';
 }
-if ($middle_image_error !== '') {
-$message = notification('warning','Article added, but middle image was not saved: '.htmlspecialchars($middle_image_error,ENT_QUOTES));
-} else {
-$message = notification('success','Article Added Successfully.');
-}
+	$warnings = array();
+	if ($middle_image_error !== '') {
+		$warnings[] = 'middle image was not saved: ' . htmlspecialchars($middle_image_error,ENT_QUOTES);
+	}
+	if ($generated_thumbnail_error !== '') {
+		$warnings[] = 'cover image generation failed: ' . htmlspecialchars($generated_thumbnail_error,ENT_QUOTES);
+	}
+	if ($generated_middle_error !== '') {
+		$warnings[] = 'middle image generation failed: ' . htmlspecialchars($generated_middle_error,ENT_QUOTES);
+	}
+	if (count($warnings) > 0) {
+		$message = notification('warning','Article added, but ' . implode(' | ', $warnings));
+	} else {
+		$message = notification('success','Article Added Successfully.');
+	}
 } else {
 $message = notification('danger','Error while saving article: '.htmlspecialchars($mysqli->error,ENT_QUOTES));	
 }
@@ -501,7 +755,7 @@ $news_token = NoCSRF::generate('news_token');
 		<form role="form" method="POST" action="" enctype="multipart/form-data">
 		  <div class="alert alert-info">
 		  <b>AI Writer:</b> enter a subject and target word count, click <b>Generate Draft</b>, review, then save.<br>
-		  Configure API in <b>Settings &gt; APIs</b> (recommended) or via <code>OPENAI_API_KEY</code>.
+		  Configure API in <b>Settings &gt; APIs</b> (recommended) or via <code>OPENAI_API_KEY</code>. You can also auto-generate cover and middle images on save.
 		  </div>
 		  <div class="row">
 		  <div class="col-md-7">
@@ -537,6 +791,14 @@ $news_token = NoCSRF::generate('news_token');
 			<label for="ai_required_terms_links">Required Words and Links</label>
 			<textarea class="form-control" name="ai_required_terms_links" id="ai_required_terms_links" rows="4" placeholder="One item per line. Examples:&#10;Artificial Intelligence&#10;https://example.com|Official source&#10;Miami" ><?php echo htmlspecialchars($ai_required_terms_links,ENT_QUOTES); ?></textarea>
 			<p class="help-block">Optional: words and URLs that must appear in the generated article.</p>
+		  </div>
+		  <div class="form-group">
+			<label for="ai_image_prompt">AI Image Subject (optional)</label>
+			<input type="text" class="form-control" name="ai_image_prompt" id="ai_image_prompt" value="<?php echo htmlspecialchars($ai_image_prompt,ENT_QUOTES); ?>" placeholder="Ex: child safety awareness in Texas" />
+			<p class="help-block">Used for generating cover and middle image with AI on Save. If empty, article title/subject is used.</p>
+		  </div>
+		  <div class="form-group">
+			<input type="checkbox" name="ai_generate_images" id="ai_generate_images" value="1" <?php if ($ai_generate_images == 1) {echo 'CHECKED';} ?> /> <span class="checkbox-label">Generate Cover + Middle Image with AI when saving</span>
 		  </div>
 		  <div class="form-group">
 			<label for="category">Title <span>*</span></label>
