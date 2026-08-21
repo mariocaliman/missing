@@ -100,11 +100,154 @@ function get_article_data_from_url($url, $fallback_html = '') {
     return array('details' => $details, 'image' => $image);
 }
 
+function extract_case_profile_fields($details)
+{
+	$text = html_entity_decode((string) $details, ENT_QUOTES, 'UTF-8');
+	$text = str_ireplace(array('<br />', '<br/>', '<br>', '</p>', '</div>', '</li>'), "\n", $text);
+	$text = strip_tags($text);
+	$text = preg_replace('/\r\n|\r/u', "\n", $text);
+	$text = preg_replace('/\n{2,}/u', "\n", $text);
+
+	$lines = array();
+	foreach (explode("\n", $text) as $line) {
+		$line = trim((string) $line);
+		if ($line !== '') {
+			$lines[] = $line;
+		}
+	}
+
+	if (empty($lines)) {
+		return false;
+	}
+
+	$fields = array(
+		'name' => '',
+		'age' => '',
+		'date' => '',
+		'city' => '',
+		'agency' => '',
+		'ncmec' => ''
+	);
+
+	foreach ($lines as $line) {
+		if ($fields['ncmec'] === '' && preg_match('~https?://[^\s]*ncmec\.org[^\s]*~i', $line, $m)) {
+			$fields['ncmec'] = trim($m[0]);
+		}
+
+		if (!preg_match('/^([A-Za-z][A-Za-z\s]{1,40})\s*[:\-]\s*(.+)$/', $line, $parts)) {
+			continue;
+		}
+
+		$label = strtolower(trim($parts[1]));
+		$value = trim($parts[2]);
+		if ($value === '') {
+			continue;
+		}
+
+		if ($fields['name'] === '' && (strpos($label, 'name') !== false || strpos($label, 'missing child') !== false || strpos($label, 'missing person') !== false)) {
+			$fields['name'] = $value;
+			continue;
+		}
+		if ($fields['age'] === '' && strpos($label, 'age') !== false) {
+			$fields['age'] = $value;
+			continue;
+		}
+		if ($fields['date'] === '' && (strpos($label, 'date') !== false || strpos($label, 'last seen') !== false)) {
+			$fields['date'] = $value;
+			continue;
+		}
+		if ($fields['city'] === '' && (strpos($label, 'city') !== false || strpos($label, 'location') !== false || strpos($label, 'county') !== false || strpos($label, 'state') !== false)) {
+			$fields['city'] = $value;
+			continue;
+		}
+		if ($fields['agency'] === '' && (strpos($label, 'department') !== false || strpos($label, 'police') !== false || strpos($label, 'sheriff') !== false || strpos($label, 'agency') !== false || strpos($label, 'law enforcement') !== false)) {
+			$fields['agency'] = $value;
+			continue;
+		}
+		if ($fields['ncmec'] === '' && strpos($label, 'ncmec') !== false) {
+			$fields['ncmec'] = $value;
+		}
+	}
+
+	$filled = 0;
+	foreach (array('name', 'age', 'date', 'city', 'agency') as $k) {
+		if ($fields[$k] !== '') {
+			$filled++;
+		}
+	}
+
+	return ($filled >= 3) ? $fields : false;
+}
+
+function build_case_profile_text($title, $fields)
+{
+	$headline = trim(html_entity_decode((string) $title, ENT_QUOTES, 'UTF-8'));
+	if ($headline === '') {
+		$headline = !empty($fields['name']) ? $fields['name'] : 'This case';
+	}
+
+	$intro = $headline . ' remains an active missing persons case. The information below organizes key details from the source report so readers can review and share accurate information quickly.';
+
+	$snapshot = array();
+	if ($fields['name'] !== '') {
+		$snapshot[] = 'Name: ' . $fields['name'];
+	}
+	if ($fields['age'] !== '') {
+		$snapshot[] = 'Age: ' . $fields['age'];
+	}
+	if ($fields['date'] !== '') {
+		$snapshot[] = 'Date reported/last seen: ' . $fields['date'];
+	}
+	if ($fields['city'] !== '') {
+		$snapshot[] = 'City/Area: ' . $fields['city'];
+	}
+	if ($fields['agency'] !== '') {
+		$snapshot[] = 'Law enforcement agency: ' . $fields['agency'];
+	}
+
+	$known_parts = array();
+	if ($fields['date'] !== '') {
+		$known_parts[] = 'The case report references the date as ' . $fields['date'];
+	}
+	if ($fields['city'] !== '') {
+		$known_parts[] = 'the location as ' . $fields['city'];
+	}
+	if ($fields['agency'] !== '') {
+		$known_parts[] = 'and the responsible agency as ' . $fields['agency'];
+	}
+	$known_text = 'What We Know So Far' . "\n";
+	if (!empty($known_parts)) {
+		$known_text .= implode(', ', $known_parts) . '. Please rely on official updates for confirmation and ongoing developments.';
+	} else {
+		$known_text .= 'This report includes verified identifiers and official references. Continue monitoring trusted updates as the case develops.';
+	}
+
+	$help_text = 'How You Can Help' . "\n";
+	$help_text .= 'If you recognize the person or have credible information, contact local law enforcement immediately and reference the case details above.';
+	if (!empty($fields['ncmec'])) {
+		$help_text .= "\nOfficial source: " . $fields['ncmec'];
+	}
+
+	$blocks = array(
+		$intro,
+		'Case Snapshot' . "\n" . implode("\n", $snapshot),
+		$known_text,
+		$help_text
+	);
+
+	return trim(implode("\n\n", array_filter($blocks)));
+}
+
 // rewrite imported article details into richer multi-paragraph narrative
 function rewrite_feed_article_details($title, $details)
 {
 	if (!is_import_rewrite_enabled()) {
 		return $details;
+	}
+
+	$case_fields = extract_case_profile_fields($details);
+	if ($case_fields !== false) {
+		return build_case_profile_text($title, $case_fields);
 	}
 
 	$plain = html_entity_decode((string) $details, ENT_QUOTES, 'UTF-8');
