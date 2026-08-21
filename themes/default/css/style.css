@@ -1476,34 +1476,45 @@ background:#ffffff;
 }
 .map-top-states-table {
 margin:0;
+width:100%;
+table-layout:fixed;
+border-collapse:collapse;
 }
 .map-top-states-table thead th {
 background:#f1f7ff;
-border-bottom:1px solid #d8e6f6;
+border:1px solid #d8e6f6;
 font-size:12px;
 text-transform:uppercase;
 letter-spacing:.06em;
 color:#46617f;
+padding:10px 12px;
 }
 .map-top-states-table tbody td {
 vertical-align:middle;
 font-size:14px;
-border-top:1px solid #edf3fb;
+border:1px solid #e2ebf7;
+padding:10px 12px;
 }
+.map-top-states-table thead th:first-child,
 .map-top-states-table tbody td:first-child {
-width:52px;
+width:56px;
 font-weight:800;
 color:#2c4f7a;
+text-align:center;
 }
+.map-top-states-table thead th:last-child,
 .map-top-states-table tbody td:last-child {
-width:110px;
+width:140px;
 font-weight:800;
-text-align:right;
+text-align:center;
 color:#153a64;
+white-space:nowrap;
 }
 .map-top-states-table tbody a {
 color:#133a66;
 font-weight:700;
+display:block;
+line-height:1.35;
 }
 .map-top-states-table tbody a:hover {
 color:#0b2e55;
