@@ -31,11 +31,18 @@
 	{/if}
 	{if isset($organization_schema_json) AND !empty($organization_schema_json)}<script type="application/ld+json">{$organization_schema_json}</script>{/if}
 	<!-- CSS Files -->
-    <link rel="stylesheet" href="themes/default/css/bootstrap.min.css">
-	<link rel="stylesheet" href="themes/default/css/bootstrap-theme.min.css">
-	<link rel="stylesheet" href="themes/default/css/font-awesome.min.css">
-	<link rel="stylesheet" href="themes/default/css/social-buttons.css">
-	<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet" type="text/css">
+	<link rel="preload" href="themes/default/css/bootstrap.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+	<link rel="preload" href="themes/default/css/bootstrap-theme.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+	<link rel="preload" href="themes/default/css/font-awesome.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+	<link rel="preload" href="themes/default/css/social-buttons.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+	<link rel="preload" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Playfair+Display:wght@700;800&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
+	<noscript>
+		<link rel="stylesheet" href="themes/default/css/bootstrap.min.css">
+		<link rel="stylesheet" href="themes/default/css/bootstrap-theme.min.css">
+		<link rel="stylesheet" href="themes/default/css/font-awesome.min.css">
+		<link rel="stylesheet" href="themes/default/css/social-buttons.css">
+		<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet" type="text/css">
+	</noscript>
     <link rel="stylesheet" href="themes/default/css/style.css">
 	<!-- Javascript Files -->
 	<script src="themes/default/js/jquery.min.js" defer></script>
@@ -49,7 +56,7 @@
 <div class="container">
 <!-- Header (logo and header ad) -->
 <div class="header row">
-<div class="col-md-3"><div class="logo"><a href="./"><img src="themes/default/images/logo.png" class="img-responsive" /></a></div></div>
+<div class="col-md-3"><div class="logo"><a href="./"><img src="themes/default/images/logo.png" class="img-responsive" width="179" height="69" alt="{$general_seo_title}" fetchpriority="high" decoding="async" /></a></div></div>
 <div class="col-md-9 header-ad">
 {$header_ad}
 </div>
