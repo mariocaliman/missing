@@ -189,7 +189,9 @@ function build_case_profile_text($title, $fields)
         $headline = !empty($fields['name']) ? $fields['name'] : 'This case';
     }
 
-    $intro = $headline . ' remains an active missing persons case. The information below organizes key details from the source report so readers can review and share accurate information quickly.';
+    $person = $fields['name'] !== '' ? $fields['name'] : $headline;
+    $intro = $headline . ' remains an active missing persons case. Behind every report is a family waiting for answers, a community hoping for safe return, and a timeline where every verified lead can matter.';
+    $context = 'This page organizes the available information in a clear and respectful format so readers can understand the case quickly, share accurate details, and avoid spreading unverified claims.';
 
     $snapshot = array();
     if ($fields['name'] !== '') {
@@ -207,6 +209,9 @@ function build_case_profile_text($title, $fields)
     if ($fields['agency'] !== '') {
         $snapshot[] = 'Law enforcement agency: ' . $fields['agency'];
     }
+    if (empty($snapshot)) {
+        $snapshot[] = 'Primary identifiers are being confirmed from the source record.';
+    }
 
     $known_parts = array();
     if ($fields['date'] !== '') {
@@ -220,21 +225,30 @@ function build_case_profile_text($title, $fields)
     }
     $known_text = 'What We Know So Far' . "\n";
     if (!empty($known_parts)) {
-        $known_text .= implode(', ', $known_parts) . '. Please rely on official updates for confirmation and ongoing developments.';
+        $known_text .= implode(', ', $known_parts) . '. These details come from the source material available at the time of publication and may be updated by authorities as new evidence is reviewed.';
     } else {
         $known_text .= 'This report includes verified identifiers and official references. Continue monitoring trusted updates as the case develops.';
     }
 
+    $impact_text = 'Why Continued Attention Matters' . "\n";
+    $impact_text .= 'Cases like this can lose visibility over time, especially when updates are limited. Responsible sharing helps keep the search active, supports families who are still waiting, and increases the chance that the right person sees the right detail at the right moment.';
+
+    $safety_text = 'Safety And Verification Notes' . "\n";
+    $safety_text .= 'If you come across possible information about ' . $person . ', avoid public speculation and do not interfere with potential evidence. Document what you observed, keep screenshots or location references when possible, and forward that information directly to official channels.';
+
     $help_text = 'How You Can Help' . "\n";
-    $help_text .= 'If you recognize the person or have credible information, contact local law enforcement immediately and reference the case details above.';
+    $help_text .= 'If you recognize the person or have credible information, contact local law enforcement immediately and reference the case details above. Even details that seem minor can help investigators connect timelines, verify sightings, or prioritize follow-up.';
     if (!empty($fields['ncmec'])) {
         $help_text .= "\nOfficial source: " . $fields['ncmec'];
     }
 
     $blocks = array(
         $intro,
+        $context,
         'Case Snapshot' . "\n" . implode("\n", $snapshot),
         $known_text,
+        $impact_text,
+        $safety_text,
         $help_text
     );
 
@@ -276,6 +290,7 @@ function rewrite_feed_article_details($title, $details)
     $third = normalize_rewrite_sentence(isset($sentences[2]) ? $sentences[2] : '');
 
     $paragraph1 = $headline . ' is a case that deserves care, urgency, and continued public attention.';
+    $paragraph1 .= ' Each missing person case affects real families and communities who continue searching for answers.';
 
     $facts = array();
     if ($first !== '') {
@@ -289,10 +304,11 @@ function rewrite_feed_article_details($title, $details)
     }
     $paragraph2 = implode(' ', $facts);
 
-    $paragraph3 = 'Every verified detail shared at the right time can help authorities move faster. If any part of this report is familiar, contact the responsible agency immediately.';
-    $paragraph4 = 'Families and communities are deeply affected in situations like this, and keeping the case visible can make a meaningful difference.';
+    $paragraph3 = 'Every verified detail shared at the right time can help authorities move faster. If any part of this report is familiar, contact the responsible agency immediately and share only factual, checkable information.';
+    $paragraph4 = 'Families and communities are deeply affected in situations like this, and keeping the case visible can make a meaningful difference over time. Continued public attention often helps preserve momentum while formal investigations continue.';
+    $paragraph5 = 'Readers can support responsible coverage by avoiding speculation, checking the original sources, and passing along relevant details through official channels. Accuracy, urgency, and compassion are all essential in cases involving missing people.';
 
-    $rewritten = trim(implode("\n\n", array_filter(array($paragraph1, $paragraph2, $paragraph3, $paragraph4))));
+    $rewritten = trim(implode("\n\n", array_filter(array($paragraph1, $paragraph2, $paragraph3, $paragraph4, $paragraph5))));
     return $rewritten !== '' ? $rewritten : $details;
 }
 
