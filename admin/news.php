@@ -575,6 +575,25 @@ function rss_ai_image_prompt_from_subject($subject, $variant = 'cover') {
 }
 }
 
+if (!function_exists('rss_generate_safe_ai_image')) {
+function rss_generate_safe_ai_image($subject, $variant, &$error_message = '') {
+	$primary_prompt = rss_ai_image_prompt_from_subject($subject, $variant);
+	$binary = rss_generate_image_with_ai($primary_prompt, $error_message);
+	if ($binary !== false) {
+		return $binary;
+	}
+
+	$fallback_subject = 'abstract editorial background with maps, documents, and soft lighting';
+	$fallback_prompt = rss_ai_image_prompt_from_subject($fallback_subject, $variant);
+	$binary = rss_generate_image_with_ai($fallback_prompt, $error_message);
+	if ($binary !== false) {
+		return $binary;
+	}
+
+	return false;
+}
+}
+
 $max_article_image_bytes = 12 * 1024 * 1024;
 $post_max_bytes = rss_parse_size_to_bytes(ini_get('post_max_size'));
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($_POST) && !empty($_SERVER['CONTENT_LENGTH']) && ((int) $_SERVER['CONTENT_LENGTH'] > 0)) {
@@ -692,8 +711,7 @@ $is_editorial_category = rss_is_editorial_category($category_id,$general);
 			$image_subject = 'community awareness and public information';
 		}
 
-		$cover_prompt = rss_ai_image_prompt_from_subject($image_subject, 'cover');
-		$cover_bytes = rss_generate_image_with_ai($cover_prompt, $generated_thumbnail_error);
+		$cover_bytes = rss_generate_safe_ai_image($image_subject, 'cover', $generated_thumbnail_error);
 		if ($cover_bytes !== false) {
 			$saved_thumbnail = rss_save_generated_news_image($cover_bytes, 'ai-cover', $generated_thumbnail_error, 0, false);
 			if ($saved_thumbnail !== '') {
@@ -702,8 +720,7 @@ $is_editorial_category = rss_is_editorial_category($category_id,$general);
 		}
 
 		if ($is_editorial_category) {
-			$middle_prompt = rss_ai_image_prompt_from_subject($image_subject, 'middle');
-			$middle_bytes = rss_generate_image_with_ai($middle_prompt, $generated_middle_error);
+			$middle_bytes = rss_generate_safe_ai_image($image_subject, 'middle', $generated_middle_error);
 			if ($middle_bytes !== false) {
 				$generated_middle_bytes = $middle_bytes;
 			}
