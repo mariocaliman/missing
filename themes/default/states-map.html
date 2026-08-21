@@ -2,7 +2,7 @@
 <link rel="stylesheet" href="themes/default/css/vendor/jsvectormap.min.css" />
 <div class="content">
 <div class="row">
-<div class="col-md-8">
+<div class="col-md-9">
 <div class="category-page map-page-card">
 <div class="section-head">
 <h1>US Cases Map</h1>
@@ -29,7 +29,7 @@ Map temporarily unavailable. Please use the Top States links while we restore th
 <p class="map-help-text">Click a state to open its category page. Hover to view total published cases.</p>
 </div>
 </div>
-<div class="col-md-4">
+<div class="col-md-3">
 <div class="top-hits-news map-side-card">
 <div class="section-head"><h4>Top States</h4></div>
 <ul class="top-news-list">
@@ -55,6 +55,7 @@ Map temporarily unavailable. Please use the Top States links while we restore th
   var values = {};
   var links = {};
   var labels = {};
+  var mapInstance = null;
 
   for (var i = 0; i < states.length; i++) {
     var code = states[i].code;
@@ -75,11 +76,67 @@ Map temporarily unavailable. Please use the Top States links while we restore th
     return;
   }
 
+  function renderCaseLabels() {
+    var mapNode = document.getElementById('us-cases-map');
+    if (!mapNode) {
+      return;
+    }
+
+    var regions = mapNode.querySelectorAll('.jvm-region');
+    if (!regions.length) {
+      return;
+    }
+
+    var layerParent = regions[0].parentNode;
+    var oldLayer = layerParent.querySelector('.cases-label-layer');
+    if (oldLayer) {
+      oldLayer.parentNode.removeChild(oldLayer);
+    }
+
+    var layer = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    layer.setAttribute('class', 'cases-label-layer');
+    layerParent.appendChild(layer);
+
+    for (var r = 0; r < regions.length; r++) {
+      var region = regions[r];
+      var regionCode = region.getAttribute('data-code') || '';
+      var stateCode = regionCode.replace('US-', '');
+      var count = values[stateCode];
+
+      if (typeof count === 'undefined') {
+        count = 0;
+      }
+
+      var bbox;
+      try {
+        bbox = region.getBBox();
+      } catch (err) {
+        continue;
+      }
+
+      if (!bbox || !bbox.width || !bbox.height) {
+        continue;
+      }
+
+      var fontSize = Math.max(7, Math.min(12, Math.round(Math.min(bbox.width, bbox.height) * 0.42)));
+      var text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      text.setAttribute('x', (bbox.x + (bbox.width / 2)).toFixed(2));
+      text.setAttribute('y', (bbox.y + (bbox.height / 2)).toFixed(2));
+      text.setAttribute('text-anchor', 'middle');
+      text.setAttribute('dominant-baseline', 'central');
+      text.setAttribute('class', 'state-case-label');
+      text.setAttribute('font-size', fontSize + 'px');
+      text.textContent = String(count);
+      layer.appendChild(text);
+    }
+  }
+
   try {
-    new jsVectorMap({
+    mapInstance = new jsVectorMap({
       selector: '#us-cases-map',
       map: 'us_merc_en',
       zoomButtons: true,
+      zoomOnScroll: false,
       regionStyle: {
         initial: {
           fill: '#d9e6f5',
@@ -108,6 +165,20 @@ Map temporarily unavailable. Please use the Top States links while we restore th
         }
       }
     });
+
+    window.setTimeout(renderCaseLabels, 120);
+    window.addEventListener('resize', function() {
+      window.setTimeout(renderCaseLabels, 120);
+    });
+
+    if (mapInstance && mapInstance.container && mapInstance.container.on) {
+      mapInstance.container.on('mouseup', function() {
+        window.setTimeout(renderCaseLabels, 60);
+      });
+      mapInstance.container.on('wheel', function() {
+        window.setTimeout(renderCaseLabels, 60);
+      });
+    }
   } catch (e) {
     showFallback();
   }
