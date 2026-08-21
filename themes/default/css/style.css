@@ -1467,6 +1467,48 @@ padding:10px 18px 0;
 color:#5f7288;
 font-size:13px;
 }
+.map-top-states-table-wrap {
+margin:8px 18px 0;
+border:1px solid #d8e6f6;
+border-radius:12px;
+overflow:hidden;
+background:#ffffff;
+}
+.map-top-states-table {
+margin:0;
+}
+.map-top-states-table thead th {
+background:#f1f7ff;
+border-bottom:1px solid #d8e6f6;
+font-size:12px;
+text-transform:uppercase;
+letter-spacing:.06em;
+color:#46617f;
+}
+.map-top-states-table tbody td {
+vertical-align:middle;
+font-size:14px;
+border-top:1px solid #edf3fb;
+}
+.map-top-states-table tbody td:first-child {
+width:52px;
+font-weight:800;
+color:#2c4f7a;
+}
+.map-top-states-table tbody td:last-child {
+width:110px;
+font-weight:800;
+text-align:right;
+color:#153a64;
+}
+.map-top-states-table tbody a {
+color:#133a66;
+font-weight:700;
+}
+.map-top-states-table tbody a:hover {
+color:#0b2e55;
+text-decoration:none;
+}
 
 @media only screen and (max-width: 1199px) {
 .us-cases-map {
@@ -1482,6 +1524,9 @@ grid-template-columns:1fr;
 .us-cases-map {
 height:62vh;
 min-height:420px;
+margin:8px 12px 0;
+}
+.map-top-states-table-wrap {
 margin:8px 12px 0;
 }
 .map-help-text {

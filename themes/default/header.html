@@ -54,7 +54,6 @@
 	<a href="#" class="toggle-menu" aria-label="Toggle navigation"><i class="fa fa-bars"></i></a>
 	<ul class="exo-menu clearfix">
 		<li class="{if isset($is_home) AND $is_home eq 1}active{/if}"><a href="./">Home</a></li>
-		<li class="{if isset($is_states_map) AND $is_states_map eq 1}active{/if}"><a href="./us-map">US Cases Map</a></li>
 		<li class="drop-down{if isset($is_category) AND $is_category eq 1} active{/if}"><a href="#">Categories</a>
 			<ul class="drop-down-ul">
 				{section name=x loop=$categories}
@@ -74,6 +73,7 @@
 		<li class="{if isset($is_category) AND $is_category eq 1 AND $category_id eq $categories[x].id}active{/if}"><a href="./category/{$categories[x].id}/{$categories[x].category|html_decode|slug}">Cases &amp; Stories</a></li>
 		{/if}
 		{/section}
+		<li class="{if isset($is_states_map) AND $is_states_map eq 1}active{/if}"><a href="./us-map">USCASEMAPS</a></li>
 		<li class="{if isset($is_support) AND $is_support eq 1}active{/if}"><a href="./support">Support</a></li>
 		<li class="{if isset($is_contact) AND $is_contact eq 1}active{/if}"><a href="./contact">Contact</a></li>
 		{if isset($general_display_rss_link) AND $general_display_rss_link eq 1}

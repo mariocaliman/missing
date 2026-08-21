@@ -29,16 +29,28 @@ Map temporarily unavailable. Please use the Top States links while we restore th
 <p class="map-help-text">Click a state to open its category page. Hover to view total published cases.</p>
 <div class="top-hits-news map-side-card">
 <div class="section-head"><h4>Top States</h4></div>
-<ul class="top-news-list">
+<div class="table-responsive map-top-states-table-wrap">
+<table class="table map-top-states-table">
+<thead>
+<tr>
+<th>#</th>
+<th>State</th>
+<th>Cases</th>
+</tr>
+</thead>
+<tbody>
 {section name=x loop=$states_top}
 {if $states_top[x].cases gt 0}
-<li>
-<a href="{$states_top[x].url}">{$states_top[x].code} - {$states_top[x].name}</a>
-<span class="news-time">{$states_top[x].cases} cases</span>
-</li>
+<tr>
+<td>{$smarty.section.x.iteration}</td>
+<td><a href="{$states_top[x].url}">{$states_top[x].code} - {$states_top[x].name}</a></td>
+<td>{$states_top[x].cases}</td>
+</tr>
 {/if}
 {/section}
-</ul>
+</tbody>
+</table>
+</div>
 </div>
 </div>
 </div>
