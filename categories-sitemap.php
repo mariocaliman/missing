@@ -21,7 +21,13 @@ $sitemap .= '<?xml version="1.0" encoding="UTF-8"?>
 $query = $mysqli->query("SELECT * FROM categories ORDER BY id ASC");
 while($row = $query->fetch_assoc())
 {
-$url = $siteurl."/category/".$row['id']."/".slugit($row['category']);
+	$category_name = trim((string) $row['category']);
+	if (preg_match('/^[A-Z]{2}\s*-\s*(.+)$/', $category_name, $matches)) {
+		$state_name = trim($matches[1]);
+		$url = $siteurl."/missing-persons/".slugit($state_name)."/";
+	} else {
+		$url = $siteurl."/category/".$row['id']."/".slugit($row['category']);
+	}
 $slugged = str_replace(':/','://',str_replace('//','/',($url)));
 $sitemap .= "<url>";
 $sitemap .= "<loc>$slugged</loc>";

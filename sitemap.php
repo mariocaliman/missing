@@ -41,6 +41,27 @@ $sitemap .= "<lastmod>$today</lastmod>
 <priority>0.8</priority>
 </url>";
 }
+
+if ($id === 1) {
+	$state_query = $mysqli->query("SELECT category FROM categories WHERE category REGEXP '^[A-Z]{2} - ' ORDER BY id ASC");
+	if ($state_query) {
+		while($state_row = $state_query->fetch_assoc()) {
+			$category_name = trim((string) $state_row['category']);
+			if (!preg_match('/^[A-Z]{2}\s*-\s*(.+)$/', $category_name, $matches)) {
+				continue;
+			}
+			$state_name = trim($matches[1]);
+			$url = $siteurl."/missing-persons/".slugit($state_name)."/";
+			$slugged = str_replace(':/','://',str_replace('//','/',($url)));
+			$sitemap .= "<url>";
+			$sitemap .= "<loc>$slugged</loc>";
+			$sitemap .= "<lastmod>$today</lastmod>
+<changefreq>daily</changefreq>
+<priority>0.7</priority>
+</url>";
+		}
+	}
+}
 $sitemap .= "</urlset>";
 echo $sitemap;
 
