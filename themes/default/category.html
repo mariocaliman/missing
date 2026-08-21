@@ -5,7 +5,10 @@
 <div class="col-md-8">
 <div class="category-page">
 <!-- Category Title -->
-<h1>{$category_category|html_decode}</h1>
+<h1>{if isset($category_heading) AND !empty($category_heading)}{$category_heading|html_decode}{else}{$category_category|html_decode}{/if}</h1>
+{if isset($category_intro) AND !empty($category_intro)}
+<p class="category-intro">{$category_intro|html_decode}</p>
+{/if}
 {if $total_records eq 0}
 <div class="alert alert-warning">There are no news in this category right now.</div>
 {else}

@@ -28,7 +28,7 @@ if ($mysqli instanceof mysqli && !$mysqli->connect_errno) {
                 $max_cases = $cases;
             }
 
-            $url = $general_setting['siteurl'] . '/category/' . intval($row['id']) . '/' . slugit($category);
+            $url = $general_setting['siteurl'] . '/missing-persons/' . slugit($name) . '/';
             $states[] = array(
                 'id' => intval($row['id']),
                 'code' => $code,

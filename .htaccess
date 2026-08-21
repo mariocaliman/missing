@@ -7,6 +7,7 @@ php_value max_input_time 120
 </IfModule>
 
 RewriteEngine on
+RewriteRule ^missing-persons/([a-z0-9-]+)/?$ category.php?state=$1 [L,QSA,NC]
 RewriteRule ^category/(.*)/(.*)$ category.php?id=$1&slug=$2
 RewriteRule ^source/(.*)/(.*)$ source.php?id=$1&slug=$2
 RewriteRule ^news/(.*)/(.*)$ news.php?id=$1&slug=$2
