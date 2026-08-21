@@ -595,7 +595,7 @@ $ai_language = 'Portuguese';
 if (isset($_POST['generate_ai'])) {
 try
 {
-NoCSRF::check('news_token', $_POST, true, 60*10, false );
+NoCSRF::check('news_token', $_POST, true, 60*10, true );
 if ($ai_topic === '') {
 $message = notification('warning','Type a subject before generating.');
 } else {
@@ -795,7 +795,10 @@ $news_token = NoCSRF::generate('news_token');
 		  <div class="form-group">
 			<label for="ai_image_prompt">AI Image Subject (optional)</label>
 			<input type="text" class="form-control" name="ai_image_prompt" id="ai_image_prompt" value="<?php echo htmlspecialchars($ai_image_prompt,ENT_QUOTES); ?>" placeholder="Ex: child safety awareness in Texas" />
-			<p class="help-block">Used for generating cover and middle image with AI on Save. If empty, article title/subject is used.</p>
+			<p class="help-block">Used for generating cover and middle image with AI on Save. If empty, article title or AI subject is used.</p>
+			<div style="margin-top:8px;">
+				<button type="button" class="btn btn-default btn-xs" id="suggest-image-subject">Suggest from title/context</button>
+			</div>
 		  </div>
 		  <div class="form-group">
 			<input type="checkbox" name="ai_generate_images" id="ai_generate_images" value="1" <?php if ($ai_generate_images == 1) {echo 'CHECKED';} ?> /> <span class="checkbox-label">Generate Cover + Middle Image with AI when saving</span>
@@ -862,11 +865,43 @@ $news_token = NoCSRF::generate('news_token');
 		}
 		group.style.display = isEditorialCategory(text) ? 'block' : 'none';
 	}
+	function getSuggestedImageSubject() {
+		var aiTopic = document.getElementById('ai_topic');
+		var title = document.getElementById('title');
+		var topicValue = aiTopic ? (aiTopic.value || '').trim() : '';
+		var titleValue = title ? (title.value || '').trim() : '';
+		return topicValue || titleValue || 'missing person awareness in the United States';
+	}
+	function refreshImageSubjectHint() {
+		var imageSubject = document.getElementById('ai_image_prompt');
+		if (!imageSubject) {
+			return;
+		}
+		var suggested = getSuggestedImageSubject();
+		imageSubject.placeholder = 'Suggested: ' + suggested;
+	}
 	document.addEventListener('DOMContentLoaded', function(){
 		var select = document.getElementById('category_id');
+		var imageSubject = document.getElementById('ai_image_prompt');
+		var suggestButton = document.getElementById('suggest-image-subject');
+		var titleField = document.getElementById('title');
+		var aiTopicField = document.getElementById('ai_topic');
 		if (select) {
 			select.addEventListener('change', toggleMiddleImageField);
 		}
+		if (suggestButton && imageSubject) {
+			suggestButton.addEventListener('click', function(){
+				imageSubject.value = getSuggestedImageSubject();
+				imageSubject.focus();
+			});
+		}
+		if (titleField) {
+			titleField.addEventListener('input', refreshImageSubjectHint);
+		}
+		if (aiTopicField) {
+			aiTopicField.addEventListener('input', refreshImageSubjectHint);
+		}
+		refreshImageSubjectHint();
 		toggleMiddleImageField();
 	});
 })();
