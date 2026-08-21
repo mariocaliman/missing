@@ -11,6 +11,7 @@
     <title>{$seo_title}</title>
 	<meta name="description" content="{$seo_description}">
 	<meta name="keywords" content="{$seo_keywords}">
+	{if isset($canonical_url) AND !empty($canonical_url)}<link rel="canonical" href="{$canonical_url}" />{/if}
 	<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6628485351612554" crossorigin="anonymous"></script>
 	<!-- Facebook Graph Meta -->	
 	{if isset($is_article) AND $is_article eq 1}
@@ -23,6 +24,8 @@
 	{/if}
 	<meta property="og:type" content="article" />
 	<meta property="article:publisher" content="{$general_seo_title}" />		
+	{if isset($article_schema_json) AND !empty($article_schema_json)}<script type="application/ld+json">{$article_schema_json}</script>{/if}
+	{if isset($breadcrumb_schema_json) AND !empty($breadcrumb_schema_json)}<script type="application/ld+json">{$breadcrumb_schema_json}</script>{/if}
 	{/if}
 	<!-- CSS Files -->
     <link rel="stylesheet" href="themes/default/css/bootstrap.min.css">

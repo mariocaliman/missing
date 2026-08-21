@@ -7,7 +7,7 @@
 <div class="article-page explained-article-page">
 <div class="explained-hero">
 <span class="explained-kicker">{if !empty($article_category_display_name)}{$article_category_display_name|html_decode}{elseif !empty($article_category_name)}{$article_category_name|html_decode}{else}Explained{/if}</span>
-<h1><a href="./news/{$article_id}/{$article_title|html_decode|slug}">{$article_title|html_decode}</a></h1>
+<h1>{$article_title|html_decode}</h1>
 <div class="explained-meta">
 <span><i class="fa fa-clock-o"></i>{$article_datetime|get_since}</span>
 <span><i class="fa fa-folder-open"></i><a href="./category/{$article_category_id}/{$article_category_id|get_category|html_decode|slug}">{$article_category_id|get_category}</a></span>
@@ -26,6 +26,7 @@
 </figure>
 {/if}
 <article class="article-content explained-reading-content">
+<h2>Key points</h2>
 {if $article_source_id eq 0}
 {$article_details|html_decode|nl2br}
 {else}
@@ -95,7 +96,7 @@
 <div class="article-page case-poster-page">
 <div class="case-poster-head">
 <span class="case-label">Missing Child Alert</span>
-<h1><a href="./news/{$article_id}/{$article_title|html_decode|slug}">{$article_title|html_decode}</a></h1>
+<h1>{$article_title|html_decode}</h1>
 <p class="case-subtitle">Please review this case carefully and share verified information. Even one detail can make a difference.</p>
 <div class="case-action-buttons">
 <a class="btn btn-danger" href="./submit-tip.php?news_id={$article_id}&missingName={$article_title|html_decode|escape:'url'}&img={$article_thumbnail|escape:'url'}&posterUrl={$article_url|escape:'url'}">Submit a Tip</a>
@@ -147,6 +148,7 @@
 </div>
 <div class="col-md-7">
 <div class="case-content-card">
+<h2>Case details</h2>
 <h3>Case Details</h3>
 <div class="article-content">
 {if $article_source_id eq 0}
