@@ -18,15 +18,10 @@
 <div class="explained-reading-wrap">
 {if !empty($article_thumbnail)}
 <figure class="explained-cover">
-{if $theme_allow_lazyload eq 1}
-<img data-src="./upload/news/{$article_thumbnail}" class="img-responsive max-width" alt="{$article_title|html_decode}" />
-{else}
-<img src="./upload/news/{$article_thumbnail}" class="img-responsive max-width" alt="{$article_title|html_decode}" />
-{/if}
+<img src="./upload/news/{$article_thumbnail}" class="img-responsive max-width" alt="{$article_title|html_decode}" width="{if isset($thumbnail_width) AND $thumbnail_width gt 0}{$thumbnail_width}{else}1200{/if}" height="{if isset($thumbnail_height) AND $thumbnail_height gt 0}{$thumbnail_height}{else}675{/if}" fetchpriority="high" decoding="async" />
 </figure>
 {/if}
 <article class="article-content explained-reading-content">
-<h2>Key points</h2>
 {if $article_source_id eq 0}
 {$article_details|html_decode|nl2br}
 {else}
@@ -35,7 +30,7 @@
 </article>
 {if !empty($article_middle_image)}
 <figure class="explained-inline-media" id="explained-inline-media">
-<img src="./upload/news/middle/{$article_middle_image}" class="img-responsive max-width" alt="{$article_title|html_decode}" />
+<img src="./upload/news/middle/{$article_middle_image}" class="img-responsive max-width" alt="{$article_title|html_decode} supporting image" width="{if isset($middle_image_width) AND $middle_image_width gt 0}{$middle_image_width}{else}1200{/if}" height="{if isset($middle_image_height) AND $middle_image_height gt 0}{$middle_image_height}{else}675{/if}" loading="lazy" decoding="async" />
 </figure>
 <script type="text/javascript">
 (function(){
@@ -111,11 +106,7 @@
 <div class="case-photo-card">
 {if !empty($article_thumbnail)}
 <div class="case-photo-wrap">
-{if $theme_allow_lazyload eq 1}
-<img data-src="./upload/news/{$article_thumbnail}" class="img-responsive max-width case-main-photo" />
-{else}
-<img src="./upload/news/{$article_thumbnail}" class="img-responsive max-width case-main-photo" />
-{/if}
+<img src="./upload/news/{$article_thumbnail}" class="img-responsive max-width case-main-photo" alt="{$article_title|html_decode}" width="{if isset($thumbnail_width) AND $thumbnail_width gt 0}{$thumbnail_width}{else}1200{/if}" height="{if isset($thumbnail_height) AND $thumbnail_height gt 0}{$thumbnail_height}{else}675{/if}" fetchpriority="high" decoding="async" />
 </div>
 {else}
 <div class="case-photo-wrap no-photo">
@@ -148,8 +139,7 @@
 </div>
 <div class="col-md-7">
 <div class="case-content-card">
-<h2>Case details</h2>
-<h3>Case Details</h3>
+<h2>Case Details</h2>
 <div class="article-content">
 {if $article_source_id eq 0}
 {$article_details|html_decode|nl2br}

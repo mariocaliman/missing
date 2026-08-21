@@ -10,8 +10,9 @@
 	<!-- SEO title,keywords,description -->	
     <title>{$seo_title}</title>
 	<meta name="description" content="{$seo_description}">
-	<meta name="keywords" content="{$seo_keywords}">
 	{if isset($canonical_url) AND !empty($canonical_url)}<link rel="canonical" href="{$canonical_url}" />{/if}
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 	<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6628485351612554" crossorigin="anonymous"></script>
 	<!-- Facebook Graph Meta -->	
 	{if isset($is_article) AND $is_article eq 1}
@@ -21,12 +22,14 @@
 	<meta property="og:description" content="{$seo_description}" />
 	{if !empty($thumbnail_url)}
 	<meta property="og:image" content="{$thumbnail_url}" />
+	<link rel="preload" as="image" href="{$thumbnail_url}" />
 	{/if}
 	<meta property="og:type" content="article" />
 	<meta property="article:publisher" content="{$general_seo_title}" />		
 	{if isset($article_schema_json) AND !empty($article_schema_json)}<script type="application/ld+json">{$article_schema_json}</script>{/if}
 	{if isset($breadcrumb_schema_json) AND !empty($breadcrumb_schema_json)}<script type="application/ld+json">{$breadcrumb_schema_json}</script>{/if}
 	{/if}
+	{if isset($organization_schema_json) AND !empty($organization_schema_json)}<script type="application/ld+json">{$organization_schema_json}</script>{/if}
 	<!-- CSS Files -->
     <link rel="stylesheet" href="themes/default/css/bootstrap.min.css">
 	<link rel="stylesheet" href="themes/default/css/bootstrap-theme.min.css">
@@ -35,11 +38,11 @@
 	<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet" type="text/css">
     <link rel="stylesheet" href="themes/default/css/style.css">
 	<!-- Javascript Files -->
-	<script src="themes/default/js/jquery.min.js"></script>
-    <script src="themes/default/js/bootstrap.min.js"></script>
-	<script src="themes/default/js/social-buttons.js"></script>
+	<script src="themes/default/js/jquery.min.js" defer></script>
+    <script src="themes/default/js/bootstrap.min.js" defer></script>
+	<script src="themes/default/js/social-buttons.js" defer></script>
 	{if $theme_allow_lazyload eq 1}
-	<script src="themes/default/js/jquery.lazyloadxt.js"></script>
+	<script src="themes/default/js/jquery.lazyloadxt.js" defer></script>
 	{/if}
 </head>
 <body>

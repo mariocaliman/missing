@@ -19,6 +19,22 @@ function rss_find_middle_image_for_article($article_id) {
 }
 }
 
+if (!function_exists('rss_image_dimensions')) {
+function rss_image_dimensions($path) {
+	$dimensions = array('width' => 0, 'height' => 0);
+	$path = trim((string) $path);
+	if ($path === '' || !is_file($path)) {
+		return $dimensions;
+	}
+	$info = @getimagesize($path);
+	if ($info !== false) {
+		$dimensions['width'] = isset($info[0]) ? intval($info[0]) : 0;
+		$dimensions['height'] = isset($info[1]) ? intval($info[1]) : 0;
+	}
+	return $dimensions;
+}
+}
+
 if (!function_exists('rss_article_seo_description')) {
 function rss_article_seo_description($title, $details, $limit = 160) {
 	$title = trim((string) html_entity_decode($title, ENT_QUOTES, 'UTF-8'));
@@ -126,7 +142,13 @@ $editorial_categories = array('explained', 'case & stories', 'case & sotories', 
 $is_editorial_category = in_array($article_category_lower,$editorial_categories) ? 1 : 0;
 $smarty->assign('is_explained_category',$is_editorial_category);
 if ($is_editorial_category == 1) {
-	$smarty->assign('article_middle_image',rss_find_middle_image_for_article($article['id']));
+	$middle_image_name = rss_find_middle_image_for_article($article['id']);
+	$smarty->assign('article_middle_image',$middle_image_name);
+	if (!empty($middle_image_name)) {
+		$middle_dimensions = rss_image_dimensions(__DIR__ . '/upload/news/middle/' . $middle_image_name);
+		$smarty->assign('middle_image_width',$middle_dimensions['width']);
+		$smarty->assign('middle_image_height',$middle_dimensions['height']);
+	}
 } else {
 	$smarty->assign('article_middle_image','');
 }
@@ -144,6 +166,9 @@ if (!empty($article['thumbnail'])) {
 $thumbnail = $general_setting['siteurl'].'/upload/news/'.$article['thumbnail'];
 $thumbnail_url = str_replace(':/','://',str_replace('//','/',($thumbnail)));
 $smarty->assign('thumbnail_url',$thumbnail_url);
+	$thumbnail_dimensions = rss_image_dimensions(__DIR__ . '/upload/news/' . $article['thumbnail']);
+	$smarty->assign('thumbnail_width',$thumbnail_dimensions['width']);
+	$smarty->assign('thumbnail_height',$thumbnail_dimensions['height']);
 }
 // assign the SEO variables (title,keywords,description).	
 $site_title = !empty($general_setting['seo_title']) ? $general_setting['seo_title'] : 'Missing USA';

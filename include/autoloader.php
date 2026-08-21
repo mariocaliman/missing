@@ -59,6 +59,15 @@ $smarty->assign('general_'.$key,$value);
 foreach ($theme_setting AS $key=>$value) {
 $smarty->assign('theme_'.$key,$value);
 }
+
+$organization_schema = array(
+    '@context' => 'https://schema.org',
+    '@type' => 'Organization',
+    'name' => !empty($general_setting['seo_title']) ? $general_setting['seo_title'] : 'Missing USA',
+    'url' => !empty($general_setting['siteurl']) ? $general_setting['siteurl'] : '',
+    'logo' => (!empty($general_setting['siteurl']) ? $general_setting['siteurl'] : '') . '/themes/default/images/logo.png'
+);
+$smarty->assign('organization_schema_json', json_encode($organization_schema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
 // queries that run in all pages
     if ($general) {
 // categories query

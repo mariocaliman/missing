@@ -1,41 +1,70 @@
 <?php
-function smarty_modifier_article_thumbnail($thumbnail,$source_id,$additional_class = false,$lazeload = 0)
+function smarty_modifier_article_thumbnail($thumbnail, $source_id, $additional_class = false, $lazeload = 0, $alt_text = '')
 {
     global $mysqli;
-	if (!empty($thumbnail)) {
-	if (file_exists('upload/news/'.$thumbnail)) {
-	if ($lazeload == 1) {	
-	$thumb = '<img data-src="upload/news/'.$thumbnail.'" class="img-responsive '.$additional_class.'" />';
-	} else {
-	$thumb = '<img src="upload/news/'.$thumbnail.'" class="img-responsive '.$additional_class.'" />';
-	}
-	} else {
-	$thumb = '';	
-	} 
-	} else {
-	$thumb = '';
-	}
-	if (!empty($thumb)) {
-	return $thumb;
-	} else {
-	$sql = "SELECT thumbnail FROM sources WHERE id='$source_id'";
-	$query = $mysqli->query($sql);
-	$row = $query->fetch_assoc();
-	if (!empty($row['thumbnail'])) {
-	if ($lazeload == 1) {
-	return '<img data-src="upload/sources/'.$row['thumbnail'].'" class="img-responsive '.$additional_class.'" />';
-	} else {
-	return '<img src="upload/sources/'.$row['thumbnail'].'" class="img-responsive '.$additional_class.'" />';	
-	}
-	} else {
-	if ($lazeload == 1) {
-	return '<img data-src="upload/noimage.jpg" class="img-responsive '.$additional_class.'" />';
-	} else {
-	return '<img src="upload/noimage.jpg" class="img-responsive '.$additional_class.'" />';
-	}
-	}
-	}
-   
+
+    $project_root = dirname(dirname(dirname(__DIR__)));
+    $base_class = 'img-responsive';
+    if (!empty($additional_class)) {
+        $base_class .= ' ' . $additional_class;
+    }
+
+    $build_img = function ($relative_path, $fallback_alt) use ($project_root, $base_class, $lazeload, $alt_text) {
+        $full_path = $project_root . '/' . $relative_path;
+        if (!is_file($full_path)) {
+            return '';
+        }
+
+        $dimensions = @getimagesize($full_path);
+        $width = ($dimensions !== false && isset($dimensions[0])) ? intval($dimensions[0]) : 0;
+        $height = ($dimensions !== false && isset($dimensions[1])) ? intval($dimensions[1]) : 0;
+        $src = $relative_path;
+        $alt = trim((string) $alt_text);
+        if ($alt === '') {
+            $alt = $fallback_alt;
+        }
+
+        $attrs = array(
+            'src="' . $src . '"',
+            'class="' . htmlspecialchars($base_class, ENT_QUOTES) . '"',
+            'alt="' . htmlspecialchars($alt, ENT_QUOTES) . '"',
+            'decoding="async"'
+        );
+
+        if ($width > 0) {
+            $attrs[] = 'width="' . $width . '"';
+        }
+        if ($height > 0) {
+            $attrs[] = 'height="' . $height . '"';
+        }
+        if ($lazeload == 1) {
+            $attrs[] = 'loading="lazy"';
+        } else {
+            $attrs[] = 'loading="eager"';
+        }
+
+        return '<img ' . implode(' ', $attrs) . ' />';
+    };
+
+    if (!empty($thumbnail)) {
+        $thumb = $build_img('upload/news/' . $thumbnail, 'Article thumbnail');
+        if (!empty($thumb)) {
+            return $thumb;
+        }
+    }
+
+    $sql = "SELECT thumbnail,title FROM sources WHERE id='$source_id'";
+    $query = $mysqli->query($sql);
+    $row = $query ? $query->fetch_assoc() : array();
+
+    if (!empty($row['thumbnail'])) {
+        $thumb = $build_img('upload/sources/' . $row['thumbnail'], !empty($row['title']) ? $row['title'] : 'Source thumbnail');
+        if (!empty($thumb)) {
+            return $thumb;
+        }
+    }
+
+    return $build_img('upload/noimage.jpg', 'No image available');
 }
 
 ?>
