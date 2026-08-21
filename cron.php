@@ -96,12 +96,13 @@ function check_item_url($permalink,$source_id) {
 			if (empty($permalink)) {
 				continue;
 			}
-			$title = $mysqli->real_escape_string(htmlspecialchars($item['title'], ENT_QUOTES));
+			$normalized_title = normalize_import_title($item['title']);
+			$title = $mysqli->real_escape_string(htmlspecialchars($normalized_title, ENT_QUOTES));
 			$content = isset($item['content']) ? $item['content'] : '';
 			$description = isset($item['description']) ? $item['description'] : '';
 			$fallback_details = (mb_strlen(strip_tags($content),'UTF-8') > mb_strlen(strip_tags($description),'UTF-8')) ? $content : $description;
 			$article_data = get_article_data_from_url($permalink, $fallback_details);
-			$rewritten_details = rewrite_feed_article_details($item['title'], $article_data['details']);
+			$rewritten_details = rewrite_feed_article_details($normalized_title, $article_data['details']);
 			$details = $mysqli->real_escape_string(htmlspecialchars($rewritten_details, ENT_QUOTES));
 			$image = $article_data['image'];
 			$datetime = time();

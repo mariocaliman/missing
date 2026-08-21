@@ -145,7 +145,7 @@ function extract_case_profile_fields($details)
 		}
 
 		if ($fields['name'] === '' && (strpos($label, 'name') !== false || strpos($label, 'missing child') !== false || strpos($label, 'missing person') !== false)) {
-			$fields['name'] = $value;
+			$fields['name'] = normalize_import_name_prefix($value);
 			continue;
 		}
 		if ($fields['age'] === '' && strpos($label, 'age') !== false) {
@@ -182,6 +182,7 @@ function extract_case_profile_fields($details)
 function build_case_profile_text($title, $fields)
 {
 	$headline = trim(html_entity_decode((string) $title, ENT_QUOTES, 'UTF-8'));
+	$headline = normalize_import_name_prefix($headline);
 	if ($headline === '') {
 		$headline = !empty($fields['name']) ? $fields['name'] : 'This case';
 	}
@@ -278,6 +279,7 @@ function rewrite_feed_article_details($title, $details)
 	}
 
 	$headline = trim(html_entity_decode((string) $title, ENT_QUOTES, 'UTF-8'));
+	$headline = normalize_import_name_prefix($headline);
 	if ($headline === '') {
 		$headline = 'This case';
 	}
@@ -381,6 +383,25 @@ function is_disallowed_feed_image_url($url)
 	}
 
 	return false;
+}
+
+function normalize_import_name_prefix($text)
+{
+	$text = trim((string) $text);
+	if ($text === '') {
+		return '';
+	}
+
+	$text = preg_replace('/^\s*#\s*:\s*/u', '', $text);
+	$text = preg_replace('/^\s*[:\-]+\s*/u', '', $text);
+	return trim((string) $text);
+}
+
+function normalize_import_title($title)
+{
+	$clean = html_entity_decode((string) $title, ENT_QUOTES, 'UTF-8');
+	$clean = normalize_import_name_prefix($clean);
+	return $clean;
 }
 
 function normalize_rewrite_sentence($text)
