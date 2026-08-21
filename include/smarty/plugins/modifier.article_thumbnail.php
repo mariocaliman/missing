@@ -46,7 +46,39 @@ function smarty_modifier_article_thumbnail($thumbnail, $source_id, $additional_c
         return '<img ' . implode(' ', $attrs) . ' />';
     };
 
+    $build_remote_img = function ($url, $fallback_alt) use ($base_class, $lazeload, $alt_text) {
+        $url = trim((string) $url);
+        if ($url === '' || !filter_var($url, FILTER_VALIDATE_URL)) {
+            return '';
+        }
+
+        $alt = trim((string) $alt_text);
+        if ($alt === '') {
+            $alt = $fallback_alt;
+        }
+
+        $attrs = array(
+            'src="' . htmlspecialchars($url, ENT_QUOTES) . '"',
+            'class="' . htmlspecialchars($base_class, ENT_QUOTES) . '"',
+            'alt="' . htmlspecialchars($alt, ENT_QUOTES) . '"',
+            'decoding="async"'
+        );
+
+        if ($lazeload == 1) {
+            $attrs[] = 'loading="lazy"';
+        } else {
+            $attrs[] = 'loading="eager"';
+        }
+
+        return '<img ' . implode(' ', $attrs) . ' />';
+    };
+
     if (!empty($thumbnail)) {
+        $remote_thumb = $build_remote_img($thumbnail, 'Article thumbnail');
+        if (!empty($remote_thumb)) {
+            return $remote_thumb;
+        }
+
         $thumb = $build_img('upload/news/' . $thumbnail, 'Article thumbnail');
         if (!empty($thumb)) {
             return $thumb;

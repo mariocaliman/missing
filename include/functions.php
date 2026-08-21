@@ -333,6 +333,30 @@ function is_import_rewrite_enabled()
 	return $enabled;
 }
 
+function is_remote_image_import_enabled()
+{
+	static $enabled = null;
+
+	if ($enabled !== null) {
+		return $enabled;
+	}
+
+	$enabled = false;
+
+	global $mysqli;
+	if (!($mysqli instanceof mysqli) || $mysqli->connect_errno) {
+		return $enabled;
+	}
+
+	$query = $mysqli->query("SELECT option_value FROM options WHERE option_name='use_source_image_url' LIMIT 1");
+	if ($query && $query->num_rows > 0) {
+		$row = $query->fetch_assoc();
+		$enabled = ((int) $row['option_value'] === 1);
+	}
+
+	return $enabled;
+}
+
 function normalize_rewrite_sentence($text)
 {
 	$text = trim((string) $text);

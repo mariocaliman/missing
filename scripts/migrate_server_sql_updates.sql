@@ -47,6 +47,13 @@ WHERE NOT EXISTS (
 );
 
 INSERT INTO options (option_name, option_value, option_default, option_set)
+SELECT 'use_source_image_url', '0', '0', 'General'
+FROM DUAL
+WHERE NOT EXISTS (
+    SELECT 1 FROM options WHERE option_name = 'use_source_image_url'
+);
+
+INSERT INTO options (option_name, option_value, option_default, option_set)
 SELECT 'openai_image_model', 'gpt-image-1', 'gpt-image-1', 'AI'
 FROM DUAL
 WHERE NOT EXISTS (

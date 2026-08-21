@@ -113,6 +113,16 @@ function rss_article_schema_json($article, $article_url, $thumbnail_url, $catego
 	);
 }
 }
+
+if (!function_exists('rss_is_remote_image_url')) {
+function rss_is_remote_image_url($value) {
+	$value = trim((string) $value);
+	if ($value === '') {
+		return false;
+	}
+	return filter_var($value, FILTER_VALIDATE_URL) !== false;
+}
+}
 // recieve the article id and slug variables
 $id = intval(make_safe(xss_clean($_GET['id'])));
 $slug = make_safe(xss_clean($_GET['slug']));
@@ -162,13 +172,21 @@ $url = $general_setting['siteurl']."/news/".$article['id']."/".slugit($article['
 $article_url = str_replace(':/','://',str_replace('//','/',($url)));
 $smarty->assign('article_url',$article_url);
 $smarty->assign('canonical_url',$article_url);
+$smarty->assign('article_thumbnail_src','');
 if (!empty($article['thumbnail'])) {
-$thumbnail = $general_setting['siteurl'].'/upload/news/'.$article['thumbnail'];
-$thumbnail_url = str_replace(':/','://',str_replace('//','/',($thumbnail)));
-$smarty->assign('thumbnail_url',$thumbnail_url);
-	$thumbnail_dimensions = rss_image_dimensions(__DIR__ . '/upload/news/' . $article['thumbnail']);
-	$smarty->assign('thumbnail_width',$thumbnail_dimensions['width']);
-	$smarty->assign('thumbnail_height',$thumbnail_dimensions['height']);
+	if (rss_is_remote_image_url($article['thumbnail'])) {
+		$thumbnail_url = $article['thumbnail'];
+		$smarty->assign('thumbnail_url',$thumbnail_url);
+		$smarty->assign('article_thumbnail_src',$thumbnail_url);
+	} else {
+		$thumbnail = $general_setting['siteurl'].'/upload/news/'.$article['thumbnail'];
+		$thumbnail_url = str_replace(':/','://',str_replace('//','/',($thumbnail)));
+		$smarty->assign('thumbnail_url',$thumbnail_url);
+		$smarty->assign('article_thumbnail_src','./upload/news/'.$article['thumbnail']);
+		$thumbnail_dimensions = rss_image_dimensions(__DIR__ . '/upload/news/' . $article['thumbnail']);
+		$smarty->assign('thumbnail_width',$thumbnail_dimensions['width']);
+		$smarty->assign('thumbnail_height',$thumbnail_dimensions['height']);
+	}
 }
 // assign the SEO variables (title,keywords,description).	
 $site_title = !empty($general_setting['seo_title']) ? $general_setting['seo_title'] : 'Missing USA';

@@ -84,6 +84,17 @@ $results[] = run_sql(
 );
 
 $results[] = run_sql(
+     $mysqli,
+     'Ensure option use_source_image_url',
+     "INSERT INTO options (option_name, option_value, option_default, option_set)
+      SELECT 'use_source_image_url', '0', '0', 'General'
+      FROM DUAL
+      WHERE NOT EXISTS (
+          SELECT 1 FROM options WHERE option_name='use_source_image_url'
+      )"
+);
+
+$results[] = run_sql(
     $mysqli,
     'Ensure option openai_image_model',
     "INSERT INTO options (option_name, option_value, option_default, option_set)

@@ -240,6 +240,7 @@ break;
 default:
 if (isset($_POST['save'])) {
 $_POST['rewrite_imported_news'] = isset($_POST['rewrite_imported_news']) ? 1 : 0;
+$_POST['use_source_image_url'] = isset($_POST['use_source_image_url']) ? 1 : 0;
 $message = $general->set_options($_POST,'General');
 }
 $options = $general->get_options('General'); 
@@ -320,6 +321,9 @@ $options = $general->get_options('General');
 		  </div>
 		  <div class="form-group">
 			<input type="checkbox" name="rewrite_imported_news" id="rewrite_imported_news" value="1" <?php if (!isset($options['rewrite_imported_news']) OR $options['rewrite_imported_news'] == 1) {echo 'CHECKED';} ?> /> <span class="checkbox-label">Rewrite imported news with emotional multi-paragraph text</span>
+		  </div>
+		  <div class="form-group">
+			<input type="checkbox" name="use_source_image_url" id="use_source_image_url" value="1" <?php if (isset($options['use_source_image_url']) AND $options['use_source_image_url'] == 1) {echo 'CHECKED';} ?> /> <span class="checkbox-label">Use source image URL in RSS import (no local download)</span>
 		  </div>
 		  <div class="form-group">
 			<label for="disqus_shortname">Disqus Shortname</label>

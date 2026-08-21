@@ -75,6 +75,7 @@ if ($action == "news_grab") {
 	$rss_link = $row['rss_link'];
 	$news_number = intval($row['news_number']);
 	$grab_limit = $news_number > 0 ? $news_number : 0;
+	$use_remote_images = is_remote_image_import_enabled();
 	$day = date('j');
 	$month = date('n');
 	$year = date('Y');
@@ -148,10 +149,12 @@ if ($action == "news_grab") {
 					$image = get_first_image($fallback_details);
 				}
 
-				if (!empty($image)) {
+				if (!empty($image) && $use_remote_images && filter_var($image, FILTER_VALIDATE_URL)) {
+					$filename = $image;
+				} elseif (!empty($image)) {
 					$filetype = strtolower(pathinfo($image, PATHINFO_EXTENSION));
 					if (!in_array($filetype,array('jpg','jpeg','png','gif','webp'))) {
-						$filename = ''; 	
+						$filename = '';
 					} else {
 						$filename = 'image_'.time().'_'.rand(0000000,99999999).'.'.$filetype;
 						$up = @file_put_contents('../upload/news/'.$filename,@file_get_contents($image));
@@ -162,7 +165,7 @@ if ($action == "news_grab") {
 								$filename = $filename;
 							} else {
 								@unlink('../upload/news/'.$filename);
-								$filename = ''; 	
+								$filename = '';
 							}
 						} else {
 							$filename = '';

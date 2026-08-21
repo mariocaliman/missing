@@ -41,6 +41,7 @@ function check_item_url($permalink,$source_id) {
 	$sql = "SELECT * FROM sources WHERE auto_update='1' ORDER BY id ASC";
 	$query = $mysqli->query($sql);
 	while ($row = $query->fetch_assoc()) {
+	$use_remote_images = is_remote_image_import_enabled();
 	$category_id = $row['category_id'];
 	$source_id = $row['id'];
 	$rss_link = $row['rss_link'];
@@ -116,7 +117,9 @@ function check_item_url($permalink,$source_id) {
 					$image = get_first_image($fallback_details);
 				}
 
-				if (!empty($image)) {
+				if (!empty($image) && $use_remote_images && filter_var($image, FILTER_VALIDATE_URL)) {
+					$filename = $image;
+				} elseif (!empty($image)) {
 					$filetype = strtolower(pathinfo($image, PATHINFO_EXTENSION));
 					if (!in_array($filetype,array('jpg','jpeg','png','gif','webp'))) {
 						$filename = '';

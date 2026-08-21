@@ -9,7 +9,7 @@
 <h1><a href="./news/{$article_id}/{$article_title|html_decode|slug}">{$article_title|html_decode}</a></h1>
 <p class="case-subtitle">Please review this case carefully and share verified information. Even one detail can make a difference.</p>
 <div class="case-action-buttons">
-<a class="btn btn-danger" href="./submit-tip.php?news_id={$article_id}&missingName={$article_title|html_decode|escape:'url'}&img={$article_thumbnail|escape:'url'}&posterUrl={$article_url|escape:'url'}">Submit a Tip</a>
+<a class="btn btn-danger" href="./submit-tip.php?news_id={$article_id}&missingName={$article_title|html_decode|escape:'url'}&img={if !empty($article_thumbnail_src)}{$article_thumbnail_src|escape:'url'}{else}{$article_thumbnail|escape:'url'}{/if}&posterUrl={$article_url|escape:'url'}">Submit a Tip</a>
 <a class="btn btn-default" href="./print-poster.php?id={$article_id}" target="_BLANK">Print Poster</a>
 <a class="btn btn-default" href="./approved-tips/{$article_id}">Approved Tips</a>
 <a class="btn btn-default" href="./support?subject=Case%20%23{$article_id}%20-%20{$article_title|html_decode|escape:'url'}">Support</a>
@@ -22,9 +22,9 @@
 {if !empty($article_thumbnail)}
 <div class="case-photo-wrap">
 {if $theme_allow_lazyload eq 1}
-<img data-src="./upload/news/{$article_thumbnail}" class="img-responsive max-width case-main-photo" />
+<img data-src="{if !empty($article_thumbnail_src)}{$article_thumbnail_src}{else}./upload/news/{$article_thumbnail}{/if}" class="img-responsive max-width case-main-photo" />
 {else}
-<img src="./upload/news/{$article_thumbnail}" class="img-responsive max-width case-main-photo" />
+<img src="{if !empty($article_thumbnail_src)}{$article_thumbnail_src}{else}./upload/news/{$article_thumbnail}{/if}" class="img-responsive max-width case-main-photo" />
 {/if}
 </div>
 {else}
@@ -81,7 +81,7 @@
       <span class="share-title">Tweet</span>
     </a>
 	{if !empty($article_thumbnail)}
-    <a target="_blank" href="http://pinterest.com/pin/create/button/?url={$general_siteurl}/news/{$article_id}/{$article_title|html_decode|slug}&amp;media={$general_siteurl}/upload/news/{$article_thumbnail}&amp;description={$article_title|html_decode}" class="share-pinterest">
+    <a target="_blank" href="http://pinterest.com/pin/create/button/?url={$general_siteurl}/news/{$article_id}/{$article_title|html_decode|slug}&amp;media={$thumbnail_url|escape:'url'}&amp;description={$article_title|html_decode}" class="share-pinterest">
       <span class="fa fa-pinterest" aria-hidden="true"></span>
       <span class="share-title">Pin it</span>
     </a>
