@@ -20,6 +20,8 @@ RewriteRule ^privacy(?:-and-security-policy|security-policy)?/?$ privacy-securit
 RewriteRule ^about(?:-us)?/?$ about-us.php [L,QSA,NC]
 RewriteRule ^disclaimer/?$ disclaimer.php [L,QSA,NC]
 RewriteRule ^legal-disclaimer/?$ disclaimer.php [L,QSA,NC]
+RewriteRule ^sources-data-policy/?$ sources-data-policy.php [L,QSA,NC]
+RewriteRule ^data-policy/?$ sources-data-policy.php [L,QSA,NC]
 RewriteRule ^contact/?$ contact.php [L,QSA,NC]
 RewriteRule ^contact-us/?$ contact.php [L,QSA,NC]
 RewriteRule ^support/?$ support.php [L,QSA,NC]
