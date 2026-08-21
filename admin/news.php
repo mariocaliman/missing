@@ -558,6 +558,23 @@ function rss_save_generated_news_image($binary, $prefix, &$error_message = '', $
 }
 }
 
+if (!function_exists('rss_ai_image_prompt_from_subject')) {
+function rss_ai_image_prompt_from_subject($subject, $variant = 'cover') {
+	$subject = trim((string) $subject);
+	if ($subject === '') {
+		$subject = 'news and public awareness';
+	}
+
+	$core_prompt = 'Create a symbolic, editorial-style illustration for a news article about: ' . $subject . '. Use neutral objects, maps, documents, roads, bulletin boards, and atmospheric lighting. Avoid depicting minors, missing people, injuries, violence, fear, police action, or identifiable real people. No text, no logos, no watermarks.';
+
+	if ($variant === 'middle') {
+		return $core_prompt . ' Make this composition different from the cover and more focused on a supporting visual angle.';
+	}
+
+	return $core_prompt . ' Make this composition strong, clean, and suitable for a headline cover image.';
+}
+}
+
 $max_article_image_bytes = 12 * 1024 * 1024;
 $post_max_bytes = rss_parse_size_to_bytes(ini_get('post_max_size'));
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($_POST) && !empty($_SERVER['CONTENT_LENGTH']) && ((int) $_SERVER['CONTENT_LENGTH'] > 0)) {
@@ -672,10 +689,10 @@ $is_editorial_category = rss_is_editorial_category($category_id,$general);
 			$image_subject = $ai_topic;
 		}
 		if ($image_subject === '') {
-			$image_subject = 'missing person awareness in the United States';
+			$image_subject = 'community awareness and public information';
 		}
 
-		$cover_prompt = 'Create a photorealistic editorial cover image about: ' . $image_subject . '. No text, no logos, no watermarks.';
+		$cover_prompt = rss_ai_image_prompt_from_subject($image_subject, 'cover');
 		$cover_bytes = rss_generate_image_with_ai($cover_prompt, $generated_thumbnail_error);
 		if ($cover_bytes !== false) {
 			$saved_thumbnail = rss_save_generated_news_image($cover_bytes, 'ai-cover', $generated_thumbnail_error, 0, false);
@@ -685,7 +702,7 @@ $is_editorial_category = rss_is_editorial_category($category_id,$general);
 		}
 
 		if ($is_editorial_category) {
-			$middle_prompt = 'Create a second photorealistic supporting image about: ' . $image_subject . '. Different scene from the cover, no text, no logos, no watermarks.';
+			$middle_prompt = rss_ai_image_prompt_from_subject($image_subject, 'middle');
 			$middle_bytes = rss_generate_image_with_ai($middle_prompt, $generated_middle_error);
 			if ($middle_bytes !== false) {
 				$generated_middle_bytes = $middle_bytes;
@@ -788,8 +805,8 @@ $news_token = NoCSRF::generate('news_token');
 		  </div>
 		  <div class="form-group">
 			<label for="ai_image_prompt">AI Image Subject (optional)</label>
-			<input type="text" class="form-control" name="ai_image_prompt" id="ai_image_prompt" value="<?php echo htmlspecialchars($ai_image_prompt,ENT_QUOTES); ?>" placeholder="Ex: child safety awareness in Texas" />
-			<p class="help-block">Used for generating cover and middle image with AI on Save. If empty, article title or AI subject is used.</p>
+			<input type="text" class="form-control" name="ai_image_prompt" id="ai_image_prompt" value="<?php echo htmlspecialchars($ai_image_prompt,ENT_QUOTES); ?>" placeholder="Ex: community awareness and public information" />
+			<p class="help-block">Used for generating cover and middle image with AI on Save. If empty, article title or AI subject is used. The image prompt is converted to a neutral editorial illustration request.</p>
 			<div style="margin-top:8px;">
 				<button type="button" class="btn btn-default btn-xs" id="suggest-image-subject">Suggest from title/context</button>
 			</div>
