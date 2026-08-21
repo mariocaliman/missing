@@ -117,6 +117,10 @@ function check_item_url($permalink,$source_id) {
 					$image = get_first_image($fallback_details);
 				}
 
+				if (!empty($image) && is_disallowed_feed_image_url($image)) {
+					$image = '';
+				}
+
 				if (!empty($image) && $use_remote_images && filter_var($image, FILTER_VALIDATE_URL)) {
 					$filename = $image;
 				} elseif (!empty($image)) {

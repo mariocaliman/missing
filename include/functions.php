@@ -357,6 +357,32 @@ function is_remote_image_import_enabled()
 	return $enabled;
 }
 
+function is_disallowed_feed_image_url($url)
+{
+	$url = trim((string) $url);
+	if ($url === '') {
+		return false;
+	}
+
+	$normalized = strtolower($url);
+	$blocked_patterns = array(
+		'missingkids/images/icons/',
+		'mk_new_large_logo',
+		'/logo.',
+		'_logo.',
+		'/icon.',
+		'/icons/'
+	);
+
+	foreach ($blocked_patterns as $pattern) {
+		if (strpos($normalized, $pattern) !== false) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
 function normalize_rewrite_sentence($text)
 {
 	$text = trim((string) $text);
