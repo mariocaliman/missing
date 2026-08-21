@@ -1,0 +1,82 @@
+{include file="header.html"}
+<div class="content">
+<div class="row">
+<div class="col-md-8">
+<div class="article-page approved-tips-page">
+<div class="case-poster-head">
+<span class="case-label">Community Reports</span>
+<h1>Approved Tips</h1>
+{if $approved_tips_news_id gt 0 AND !empty($approved_tips_case_title)}
+<p class="case-subtitle">Anonymous, admin-approved reports for this case.</p>
+<div class="approved-tips-toolbar">
+<span class="approved-tips-chip"><i class="fa fa-folder-open"></i> {$approved_tips_case_title|escape}</span>
+<a class="btn btn-default btn-sm" href="./approved-tips">View All Approved Tips</a>
+</div>
+{else}
+<p class="case-subtitle">All tips are displayed anonymously after admin approval.</p>
+{/if}
+</div>
+<div class="case-poster-body">
+{if $approved_tips_count eq 0}
+<div class="approved-tip-empty">
+<i class="fa fa-comments-o"></i>
+<h3>No Approved Tips Yet</h3>
+<p>When a report is approved by the admin team, it will appear here anonymously.</p>
+</div>
+{else}
+<div class="approved-tip-list">
+{foreach from=$approved_tips item=tip}
+<div class="approved-tip-card">
+<div class="approved-tip-meta">
+<span class="approved-tip-badge">Anonymous Tip</span>
+<span><i class="fa fa-clock-o"></i>{$tip.created_at}</span>
+{if !empty($tip.tip_location)}
+<span><i class="fa fa-map-marker"></i>{$tip.tip_location|escape}</span>
+{/if}
+</div>
+<h3><a href="./news/{$tip.news_id}/{$tip.case_slug}">{$tip.missing_name|escape}</a></h3>
+<p>{$tip.tip_message|escape|truncate:500}</p>
+<div class="approved-tip-actions">
+<a class="btn btn-default btn-sm" href="./news/{$tip.news_id}/{$tip.case_slug}">View Case</a>
+</div>
+</div>
+{/foreach}
+</div>
+<div class="clear"></div>
+{$approved_tips_pagi}
+{/if}
+</div>
+<div class="section-box latest-stack approved-tips-latest">
+<div class="section-head">
+<h4>Last News</h4>
+</div>
+{if $approved_tips_latest|@count gt 0}
+<ul class="related-news-grid latest-news-grid">
+{foreach from=$approved_tips_latest item=news}
+<li class="related-item">
+<div class="related-media">
+{if !empty($news.thumbnail)}
+{$news.thumbnail|article_thumbnail:$news.source_id:false:$theme_allow_lazyload}
+{else}
+<span class="thumb-fallback"><i class="fa fa-file-image-o"></i></span>
+{/if}
+</div>
+<div class="related-copy">
+<a href="./news/{$news.id}/{$news.title|html_decode|slug}">{$news.title|html_decode}</a>
+<span class="news-time"><i class="fa fa-clock-o"></i>{$news.datetime|get_since}</span>
+</div>
+</li>
+{/foreach}
+</ul>
+{else}
+<div class="alert alert-warning" style="margin:0;">No published news found yet.</div>
+{/if}
+</div>
+</div>
+</div>
+<div class="col-md-4">
+{include file="sidebar.html"}
+</div>
+</div>
+</div>
+{include file="footer.html"}

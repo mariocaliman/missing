@@ -1,0 +1,149 @@
+<!-- HomePage HTML -->
+{include file="header.html"}
+<div class="content home-varient">
+{if $top neq 0}
+{foreach name=hero from=$top item=hero_news}
+{if $smarty.foreach.hero.first}
+<div class="hero-block section-box">
+<div class="row">
+<div class="col-md-7 hero-media">
+<a class="hero-image-link" href="./news/{$hero_news.id}/{$hero_news.title|html_decode|slug}">
+{$hero_news.thumbnail|article_thumbnail:$hero_news.source_id:"max-width":$theme_allow_lazyload}
+</a>
+</div>
+<div class="col-md-5 hero-copy">
+<span class="hero-kicker">Breaking News</span>
+<h1><a href="./news/{$hero_news.id}/{$hero_news.title|html_decode|slug}">{$hero_news.title|html_decode}</a></h1>
+<div class="article-meta">
+<span><i class="fa fa-clock-o"></i>{$hero_news.datetime|get_since}</span>
+<span><i class="fa fa-reorder"></i><a href="./category/{$hero_news.category_id}/{$hero_news.category_id|get_category|html_decode|slug}">{$hero_news.category_id|get_category}</a></span>
+<span><i class="fa fa-rss"></i><a href="./source/{$hero_news.source_id}/{$hero_news.source_id|get_source|html_decode|slug}">{$hero_news.source_id|get_source}</a></span>
+</div>
+<p>{$hero_news.details|html_decode|strip_tags|truncate:230}</p>
+</div>
+</div>
+</div>
+{/if}
+{/foreach}
+{/if}
+<div class="row">
+<div class="col-md-8">
+<!-- Homepage Categories Loop -->
+{assign var="home_sections" value=0}
+{assign var="home_selected_count" value=0}
+{section name=i loop=$categories}
+{if $categories[i].index_view eq 1}
+{assign var="home_selected_count" value=$home_selected_count+1}
+{/if}
+{/section}
+{section name=x loop=$categories}
+{if $categories[x].index_view eq 1 OR $home_selected_count eq 0}
+{assign var="category_news" value=$categories[x].id|news_in_category:$theme_home_category_news_number}
+{if $category_news neq 0}
+{assign var="home_sections" value=1}
+<div class="section-box category-spotlight">
+<!-- Category Title -->
+<div class="section-head">
+<h4>{$categories[x].category}</h4>
+<a class="more-link" href="./category/{$categories[x].id}/{$categories[x].category|html_decode|slug}">More</a>
+</div>
+<!-- Category News Loop -->
+{foreach name=x from=$category_news key=id item=news}
+<!-- First Article Of Category -->
+{if $smarty.foreach.x.first}
+<div class="first-section-news featured-story">
+<div class="row">
+<div class="col-sm-5 col-xs-4">
+<!-- Article Thumbnail -->
+{if !empty($news.thumbnail)}
+{$news.thumbnail|article_thumbnail:$news.source_id:"max-width":$theme_allow_lazyload}
+{else}
+<span class="thumb-fallback featured-fallback"><i class="fa fa-file-image-o"></i></span>
+{/if}
+</div>
+<div class="col-sm-7 col-xs-8">
+<!-- Article Title -->
+<a href="./news/{$news.id}/{$news.title|html_decode|slug}">{$news.title|html_decode}</a>
+<!-- Article Info (date,category,source,hits) -->
+<div class="article-meta">
+<span><i class="fa fa-clock-o"></i>{$news.datetime|get_since}</span>
+<span><i class="fa fa-reorder"></i><a href="./category/{$news.category_id}/{$news.category_id|get_category|html_decode|slug}">{$news.category_id|get_category}</a></span>
+<span><i class="fa fa-rss"></i><a href="./source/{$news.source_id}/{$news.source_id|get_source|html_decode|slug}">{$news.source_id|get_source}</a></span>
+<span><i class="fa fa-bar-chart"></i> {$news.hits}</span>
+</div>
+<!-- Article Excerpt -->
+<p>{$news.details|html_decode|strip_tags|truncate:170}</p>
+</div>
+</div>
+</div>
+{if $category_news|@count gt 1}
+<div class="category-mini-grid">
+{/if}
+<!-- End of First Article Of Category -->
+{else}
+<!-- Rest Of News Loop -->
+{if $smarty.foreach.x.index le 4}
+<div class="category-mini-card">
+<a class="category-mini-media" href="./news/{$news.id}/{$news.title|html_decode|slug}">
+{if !empty($news.thumbnail)}
+{$news.thumbnail|article_thumbnail:$news.source_id:false:$theme_allow_lazyload}
+{else}
+<span class="thumb-fallback"><i class="fa fa-file-image-o"></i></span>
+{/if}
+</a>
+<div class="category-mini-copy">
+<a href="./news/{$news.id}/{$news.title|html_decode|slug}">{$news.title|html_decode|truncate:86}</a>
+</div>
+</div>
+{/if}
+{/if}
+{/foreach}
+{if $category_news|@count gt 1}
+</div>
+{/if}
+<!-- End Of Category News Loop -->
+</div>
+<!-- Start Content Advertisement -->
+{if $smarty.section.x.first}
+<div class="content-ad">{$content_ad}</div>
+{/if}
+<!-- End Content Advertisement -->
+{/if}
+{/if}
+{/section}
+<!-- End Of Homepage Categories Loop -->
+<div class="section-box latest-stack">
+<div class="section-head">
+<h4>Latest News</h4>
+</div>
+{if $latest_home neq 0}
+<ul class="related-news-grid latest-news-grid">
+{foreach from=$latest_home item=news}
+<li class="related-item">
+<div class="related-media">
+{if !empty($news.thumbnail)}
+{$news.thumbnail|article_thumbnail:$news.source_id:false:$theme_allow_lazyload}
+{else}
+<span class="thumb-fallback"><i class="fa fa-file-image-o"></i></span>
+{/if}
+</div>
+<div class="related-copy">
+<a href="./news/{$news.id}/{$news.title|html_decode|slug}">{$news.title|html_decode}</a>
+<span class="news-time"><i class="fa fa-clock-o"></i>{$news.datetime|get_since}</span>
+</div>
+</li>
+{/foreach}
+</ul>
+{else}
+<div class="alert alert-warning" style="margin:0;">No published news found yet.</div>
+{/if}
+</div>
+</div>
+<div class="col-md-4 home-sidebar-col">
+<!-- Include the SideBar -->
+{include file="sidebar.html"}
+</div>
+</div>
+</div>
+{include file="footer.html"}
+<!-- End HomePage HTML -->

@@ -1,0 +1,24 @@
+<!-- Start Top News Widget HTML -->
+{if $top neq 0}
+<div class="widget top-hits-news">
+<h4>Top News</h4>
+<ul>
+{section name=x loop=$top}
+<li class="top-news-item">
+<div class="top-news-media">
+{if !empty($top[x].thumbnail)}
+{$top[x].thumbnail|article_thumbnail:$top[x].source_id:false:$theme_allow_lazyload}
+{else}
+<span class="thumb-fallback"><i class="fa fa-newspaper-o"></i></span>
+{/if}
+</div>
+<div class="top-news-content">
+<a href="./news/{$top[x].id}/{$top[x].title|html_decode|slug}">{$top[x].title|html_decode}</a>
+<span class="news-time"><i class="fa fa-clock-o"></i>{$top[x].datetime|get_since}</span>
+</div>
+</li>
+{/section}
+</ul>
+</div>
+{/if}
+<!-- End Top News Widget HTML -->

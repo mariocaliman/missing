@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <!-- Script Charset -->
+	<meta charset="UTF-8">
+	<!-- Style Viewport for Responsive purpose -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<!-- The Script Base URL -->
+	<BASE href="{$general_siteurl}">
+	<!-- SEO title,keywords,description -->	
+    <title>{$seo_title}</title>
+	<meta name="description" content="{$seo_description}">
+	<meta name="keywords" content="{$seo_keywords}">
+	<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6628485351612554" crossorigin="anonymous"></script>
+	<!-- Facebook Graph Meta -->	
+	{if isset($is_article) AND $is_article eq 1}
+	<meta property="og:site_name" content="{$general_seo_title}"/>
+	<meta property="og:url" content="{$article_url}" />
+	<meta property="og:title" content="{$article_title|html_decode}" />
+	<meta property="og:description" content="{$seo_description}" />
+	{if !empty($thumbnail_url)}
+	<meta property="og:image" content="{$thumbnail_url}" />
+	{/if}
+	<meta property="og:type" content="article" />
+	<meta property="article:publisher" content="{$general_seo_title}" />		
+	{/if}
+	<!-- CSS Files -->
+    <link rel="stylesheet" href="themes/default-rtl/css/bootstrap.min.css">
+	<link rel="stylesheet" href="themes/default-rtl/css/bootstrap-theme.min.css">
+	<link rel="stylesheet" href="themes/default-rtl/css/font-awesome.min.css">
+	<link rel="stylesheet" href="themes/default-rtl/css/social-buttons.css">
+	<link href="http://fonts.googleapis.com/css?family=Titillium+Web:400,700" rel="stylesheet" type="text/css">
+    <link rel="stylesheet" href="themes/default-rtl/css/style.css">
+	<!-- Javascript Files -->
+	<script src="themes/default-rtl/js/jquery.min.js"></script>
+    <script src="themes/default-rtl/js/bootstrap.min.js"></script>
+	<script src="themes/default-rtl/js/social-buttons.js"></script>
+	{if $theme_allow_lazyload eq 1}
+	<script src="themes/default-rtl/js/jquery.lazyloadxt.js"></script>
+	{/if}
+</head>
+<body>
+<div class="container">
+<!-- Header (logo and header ad) -->
+<div class="header row">
+<div class="col-md-3"><div class="logo"><a href="./"><img src="themes/default-rtl/images/logo.png" class="img-responsive" /></a></div></div>
+<div class="col-md-9 header-ad">
+{$header_ad}
+</div>
+</div>
+<!-- End Header -->
+<!-- Start Menu -->
+<nav class="exo-nav-wrap clearfix" role="navigation">
+	<a href="#" class="toggle-menu" aria-label="Toggle navigation"><i class="fa fa-bars"></i></a>
+	<ul class="exo-menu clearfix">
+		<li class="{if isset($is_home) AND $is_home eq 1}active{/if}"><a href="./">Home</a></li>
+		<li class="drop-down{if isset($is_category) AND $is_category eq 1} active{/if}"><a href="#">Categories</a>
+			<ul class="drop-down-ul">
+				{section name=x loop=$categories}
+				<li class="{if isset($is_category) AND $is_category eq 1 AND $category_id eq $categories[x].id}active{/if}"><a href="./category/{$categories[x].id}/{$categories[x].category|html_decode|slug}">{$categories[x].category}</a></li>
+				{/section}
+			</ul>
+		</li>
+		<li class="{if isset($is_support) AND $is_support eq 1}active{/if}"><a href="./support">Support</a></li>
+		<li class="{if isset($is_contact) AND $is_contact eq 1}active{/if}"><a href="./contact">Contact</a></li>
+		{if isset($general_display_rss_link) AND $general_display_rss_link eq 1}
+		<li><a href="./rss.xml" target="_NEW"><i class="fa fa-rss"></i> RSS</a></li>
+		{/if}
+	</ul>
+</nav>
+<!-- End Menu -->

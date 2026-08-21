@@ -1,0 +1,116 @@
+{include file="header.html"}
+<link rel="stylesheet" href="themes/default/css/vendor/jsvectormap.min.css" />
+<div class="content">
+<div class="row">
+<div class="col-md-8">
+<div class="category-page map-page-card">
+<div class="section-head">
+<h1>US Cases Map</h1>
+<span class="more-link">Live by published cases</span>
+</div>
+<div class="map-stats-row">
+<div class="map-stat-box">
+<strong>{$states_total_cases}</strong>
+<span>Total Cases</span>
+</div>
+<div class="map-stat-box">
+<strong>{$states_active_count}</strong>
+<span>States With Cases</span>
+</div>
+<div class="map-stat-box">
+<strong>{$states_max_cases}</strong>
+<span>Highest State Count</span>
+</div>
+</div>
+<div id="us-cases-map" class="us-cases-map"></div>
+<div id="us-map-fallback" class="alert alert-warning" style="display:none; margin-top: 12px;">
+Map temporarily unavailable. Please use the Top States links while we restore the visualization.
+</div>
+<p class="map-help-text">Click a state to open its category page. Hover to view total published cases.</p>
+</div>
+</div>
+<div class="col-md-4">
+<div class="top-hits-news map-side-card">
+<div class="section-head"><h4>Top States</h4></div>
+<ul class="top-news-list">
+{section name=x loop=$states_top}
+{if $states_top[x].cases gt 0}
+<li>
+<a href="{$states_top[x].url}">{$states_top[x].code} - {$states_top[x].name}</a>
+<span class="news-time">{$states_top[x].cases} cases</span>
+</li>
+{/if}
+{/section}
+</ul>
+</div>
+{include file="sidebar.html"}
+</div>
+</div>
+</div>
+<script src="themes/default/js/vendor/jsvectormap.min.js"></script>
+<script src="themes/default/js/vendor/us-merc-en.js"></script>
+<script>
+(function(){
+  var states = {$states_map_json};
+  var values = {};
+  var links = {};
+  var labels = {};
+
+  for (var i = 0; i < states.length; i++) {
+    var code = states[i].code;
+    values[code] = parseInt(states[i].cases, 10) || 0;
+    links[code] = states[i].url;
+    labels[code] = states[i].name;
+  }
+
+  function showFallback() {
+    var fallback = document.getElementById('us-map-fallback');
+    if (fallback) {
+      fallback.style.display = 'block';
+    }
+  }
+
+  if (typeof window.jsVectorMap === 'undefined') {
+    showFallback();
+    return;
+  }
+
+  try {
+    new jsVectorMap({
+      selector: '#us-cases-map',
+      map: 'us_merc_en',
+      zoomButtons: true,
+      regionStyle: {
+        initial: {
+          fill: '#d9e6f5',
+          stroke: '#ffffff',
+          strokeWidth: 1
+        },
+        hover: {
+          fill: '#274b7a'
+        }
+      },
+      series: {
+        regions: [{
+          values: values,
+          scale: ['#d9e6f5', '#2f4f7f'],
+          normalizeFunction: 'polynomial'
+        }]
+      },
+      onRegionTooltipShow: function(event, tooltip, code) {
+        var count = values[code] || 0;
+        var name = labels[code] || code;
+        tooltip.text(name + ' (' + code + '): ' + count + ' case' + (count === 1 ? '' : 's'));
+      },
+      onRegionClick: function(event, code) {
+        if (links[code]) {
+          window.location.href = links[code];
+        }
+      }
+    });
+  } catch (e) {
+    showFallback();
+  }
+})();
+</script>
+{include file="footer.html"}

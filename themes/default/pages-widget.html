@@ -1,0 +1,16 @@
+<!-- Pages Widget -->
+{if $pages neq 0}
+<div class="widget links">
+<h4>Pages</h4>
+<ul>
+<li>
+<a href="./privacy-and-security-policy"><i class="fa fa-shield"></i>Privacy Policy</a></li>
+<li>
+<a href="./terms-conditions"><i class="fa fa-gavel"></i>Terms & Conditions</a></li>
+{section name=x loop=$pages}
+<li>
+<a href="./page/{$pages[x].id}/{$pages[x].title|html_decode|slug}"><i class="fa fa-file"></i>{$pages[x].title|html_decode}</a></li>
+{/section}
+</ul>
+</div>
+{/if}

@@ -1,0 +1,156 @@
+<!-- Start Article Page HTML -->
+{include file="header.html"}
+<div class="content">
+<div class="row article-full-mobile">
+<div class="col-md-8 article-main-col">
+<div class="article-page case-poster-page">
+<div class="case-poster-head">
+<span class="case-label">Missing Child Alert</span>
+<h1><a href="./news/{$article_id}/{$article_title|html_decode|slug}">{$article_title|html_decode}</a></h1>
+<p class="case-subtitle">Please review this case carefully and share verified information. Even one detail can make a difference.</p>
+<div class="case-action-buttons">
+<a class="btn btn-danger" href="./submit-tip.php?news_id={$article_id}&missingName={$article_title|html_decode|escape:'url'}&img={$article_thumbnail|escape:'url'}&posterUrl={$article_url|escape:'url'}">Submit a Tip</a>
+<a class="btn btn-default" href="./print-poster.php?id={$article_id}" target="_BLANK">Print Poster</a>
+<a class="btn btn-default" href="./approved-tips/{$article_id}">Approved Tips</a>
+<a class="btn btn-default" href="./support?subject=Case%20%23{$article_id}%20-%20{$article_title|html_decode|escape:'url'}">Support</a>
+</div>
+</div>
+<div class="case-poster-body">
+<div class="row">
+<div class="col-md-5">
+<div class="case-photo-card">
+{if !empty($article_thumbnail)}
+<div class="case-photo-wrap">
+{if $theme_allow_lazyload eq 1}
+<img data-src="./upload/news/{$article_thumbnail}" class="img-responsive max-width case-main-photo" />
+{else}
+<img src="./upload/news/{$article_thumbnail}" class="img-responsive max-width case-main-photo" />
+{/if}
+</div>
+{else}
+<div class="case-photo-wrap no-photo">
+<span>Photo Not Available</span>
+</div>
+{/if}
+<div class="case-quickfacts">
+<div class="fact-item">
+<span>Case ID</span>
+<strong>#{$article_id}</strong>
+</div>
+<div class="fact-item">
+<span>Published</span>
+<strong>{$article_datetime|get_since}</strong>
+</div>
+<div class="fact-item">
+<span>Category</span>
+<strong><a href="./category/{$article_category_id}/{$article_category_id|get_category|html_decode|slug}">{$article_category_id|get_category}</a></strong>
+</div>
+<div class="fact-item">
+<span>Source</span>
+<strong><a href="./source/{$article_source_id}/{$article_source_id|get_source|html_decode|slug}">{$article_source_id|get_source}</a></strong>
+</div>
+<div class="fact-item">
+<span>Views</span>
+<strong>{$article_hits}</strong>
+</div>
+</div>
+</div>
+</div>
+<div class="col-md-7">
+<div class="case-content-card">
+<h3>Case Details</h3>
+<div class="article-content">
+{if $article_source_id eq 0}
+{$article_details|html_decode|nl2br}
+{else}
+{$article_details|html_decode|strip_tags|nl2br}
+{/if}
+</div>
+<div class="case-tip-box">
+<h4>Have Information?</h4>
+<p>If you recognize this person or have credible information, contact local law enforcement immediately.</p>
+</div>
+<div class="article-share">
+<div class="social-sharing" data-permalink="{$general_siteurl}/news/{$article_id}/{$article_title|html_decode|slug}">
+    <a target="_blank" href="http://www.facebook.com/sharer.php?u={$general_siteurl}/news/{$article_id}/{$article_title|html_decode|slug}" class="share-facebook">
+      <span class="fa fa-facebook" aria-hidden="true"></span>
+      <span class="share-title">Share</span>
+    </a>
+    <a target="_blank" href="http://twitter.com/share?url={$general_siteurl}/news/{$article_id}/{$article_title|html_decode|slug}&amp;text={$article_title|html_decode}" class="share-twitter">
+      <span class="fa fa-twitter" aria-hidden="true"></span>
+      <span class="share-title">Tweet</span>
+    </a>
+	{if !empty($article_thumbnail)}
+    <a target="_blank" href="http://pinterest.com/pin/create/button/?url={$general_siteurl}/news/{$article_id}/{$article_title|html_decode|slug}&amp;media={$general_siteurl}/upload/news/{$article_thumbnail}&amp;description={$article_title|html_decode}" class="share-pinterest">
+      <span class="fa fa-pinterest" aria-hidden="true"></span>
+      <span class="share-title">Pin it</span>
+    </a>
+	{/if}
+    <a target="_blank" href="http://plus.google.com/share?url={$general_siteurl}/news/{$article_id}/{$article_title|html_decode|slug}" class="share-google">
+      <span class="fa fa-google" aria-hidden="true"></span>
+      <span class="share-title">+1</span>
+    </a>
+  </div>
+</div>
+<!-- Start Content Advertisement -->
+{if !empty($content_ad)}
+{$content_ad}
+{/if}
+</div>
+</div>
+</div>
+</div>
+</div>
+{if $related neq 0}
+<!-- Related News -->
+<div class="related-news">
+<div class="section-head">
+<h4>Related News</h4>
+</div>
+<ul class="related-news-grid">
+{section name=x loop=$related}
+<li class="related-item">
+<div class="related-media">
+{if !empty($related[x].thumbnail)}
+{$related[x].thumbnail|article_thumbnail:$related[x].source_id:false:$theme_allow_lazyload}
+{else}
+<span class="thumb-fallback"><i class="fa fa-file-image-o"></i></span>
+{/if}
+</div>
+<div class="related-copy">
+<a href="./news/{$related[x].id}/{$related[x].title|html_decode|slug}">{$related[x].title|html_decode|truncate:75}</a>
+<span class="news-time"><i class="fa fa-clock-o"></i>{$related[x].datetime|get_since}</span>
+</div>
+</li>
+{/section}
+</ul>
+</div>
+{/if}
+{if $general_display_disqus_comments eq 1}
+<div id="disqus_thread"></div>
+{literal}
+<script type="text/javascript">
+    /* * * CONFIGURATION VARIABLES * * */
+    var disqus_shortname = '{/literal}{$general_disqus_shortname}{literal}';
+    var disqus_identifier = '{/literal}{$article_id}{literal}';
+    var disqus_title = '{/literal}{$article_title}{literal}';
+    var disqus_url = '{/literal}{$general_siteurl}/news/{$article_id}/{$article_title|html_decode|slug}{literal}';
+	
+    /* * * DON'T EDIT BELOW THIS LINE * * */
+    (function() {
+        var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+</script>
+{/literal}
+{/if}
+</div>
+<div class="col-md-4 article-sidebar-col">
+<!-- Include the SideBar -->
+{include file="sidebar.html"}
+</div>
+</div>
+</div>
+{include file="footer.html"}
+<!-- End Article Page HTML -->

@@ -1,0 +1,74 @@
+<!-- Start Footer -->
+<div class="footer modern-footer">
+<div class="footer-panel row">
+<div class="col-sm-6 footer-brand">
+<h4><a href="{$general_siteurl}">Missing USA</a></h4>
+<p>Community-driven missing persons alerts, updates, and anonymous reporting.</p>
+</div>
+<div class="col-sm-6 footer-nav text-right">
+<a href="./">Home</a>
+<a href="./support">Support</a>
+<a href="./approved-tips">Approved Tips</a>
+<a href="./terms-and-conditions">Terms & Conditions</a>
+<a href="./privacy-and-security-policy">Privacy Policy</a>
+<a href="./contact">Contact</a>
+{if isset($general_display_rss_link) AND $general_display_rss_link eq 1}
+<a href="./rss.xml" target="_NEW">RSS</a>
+{/if}
+</div>
+</div>
+<div class="footer-meta row">
+<div class="col-sm-12 copyrights">All Rights Reserved <a href="{$general_siteurl}">{$general_seo_title}</a></div>
+</div>
+</div>
+<div id="cookie-consent-banner" class="cookie-consent-banner" role="dialog" aria-live="polite" aria-label="Cookie consent">
+<div class="cookie-consent-copy">
+<strong>We use cookies.</strong> By continuing to browse Missing USA, you agree to our use of cookies and similar technologies. <a href="./privacy-and-security-policy">Learn more</a>.
+</div>
+<button type="button" id="cookie-consent-accept" class="cookie-consent-btn">Accept</button>
+</div>
+<script>
+(function () {
+	var banner = document.getElementById('cookie-consent-banner');
+	var button = document.getElementById('cookie-consent-accept');
+	var storageKey = 'missingusa_cookie_consent';
+	try {
+		if (localStorage.getItem(storageKey) === 'accepted') {
+			banner.style.display = 'none';
+			return;
+		}
+	} catch (e) {}
+	banner.classList.add('is-visible');
+	button.addEventListener('click', function () {
+		try {
+			localStorage.setItem(storageKey, 'accepted');
+		} catch (e) {}
+		banner.classList.remove('is-visible');
+		banner.style.display = 'none';
+	});
+})();
+
+(function () {
+	var toggle = document.querySelector('.toggle-menu');
+	var menu = document.querySelector('.exo-menu');
+	if (toggle && menu) {
+		toggle.addEventListener('click', function (event) {
+			event.preventDefault();
+			menu.classList.toggle('display');
+		});
+	}
+	var dropdownLinks = document.querySelectorAll('.exo-menu > li.drop-down > a');
+	Array.prototype.forEach.call(dropdownLinks, function (link) {
+		link.addEventListener('click', function (event) {
+			if (window.innerWidth < 768) {
+				event.preventDefault();
+				this.parentNode.classList.toggle('open');
+			}
+		});
+	});
+})();
+</script>
+<!-- End Footer -->
+</div>
+</body>
+</html>

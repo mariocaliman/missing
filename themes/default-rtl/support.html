@@ -1,0 +1,55 @@
+{include file="header.html"}
+<div class="content">
+<div class="row">
+<div class="col-md-8">
+<div class="article-page tip-form-page support-ticket-page">
+<div class="case-poster-head">
+<span class="case-label">Visitor Support</span>
+<h1>Open a Support Ticket</h1>
+<p class="case-subtitle">Need help with a post, account issue, or correction request? Open a ticket and our team will reply by email.</p>
+</div>
+<div class="case-poster-body">
+{if !empty($form_message)}
+<div class="alert alert-{$form_message_type}">
+{$form_message}
+{if !empty($created_ticket_code)}<br><strong>Ticket Code:</strong> {$created_ticket_code}{/if}
+</div>
+{/if}
+<form method="POST" action="./support" class="tip-form-card">
+<input type="hidden" name="support_form_token" value="{$support_form_token}">
+<div style="display:none;">
+<label>Website</label>
+<input type="text" name="website" value="">
+</div>
+<div class="row">
+<div class="col-sm-6 form-group">
+<label for="visitor_name">Your Name *</label>
+<input type="text" class="form-control" id="visitor_name" name="visitor_name" value="{$form_data.visitor_name|escape}">
+</div>
+<div class="col-sm-6 form-group">
+<label for="visitor_email">Email *</label>
+<input type="email" class="form-control" id="visitor_email" name="visitor_email" value="{$form_data.visitor_email|escape}">
+</div>
+</div>
+<div class="form-group">
+<label for="ticket_subject">Subject *</label>
+<input type="text" class="form-control" id="ticket_subject" name="ticket_subject" value="{$form_data.ticket_subject|escape}" placeholder="Ex: Correction request for case #402">
+</div>
+<div class="form-group">
+<label for="ticket_message">Message *</label>
+<textarea class="form-control" id="ticket_message" name="ticket_message" rows="8" placeholder="Explain your request with as much detail as possible.">{$form_data.ticket_message|escape}</textarea>
+</div>
+<div class="tip-form-actions">
+<button type="submit" class="btn btn-danger btn-lg">Create Ticket</button>
+<a href="./contact" class="btn btn-default btn-lg">General Contact</a>
+</div>
+</form>
+</div>
+</div>
+</div>
+<div class="col-md-4">
+{include file="sidebar.html"}
+</div>
+</div>
+</div>
+{include file="footer.html"}

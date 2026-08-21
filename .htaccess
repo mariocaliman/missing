@@ -1,0 +1,30 @@
+<IfModule mod_php.c>
+php_value upload_max_filesize 12M
+php_value post_max_size 16M
+php_value max_file_uploads 30
+php_value max_execution_time 120
+php_value max_input_time 120
+</IfModule>
+
+RewriteEngine on
+RewriteRule ^category/(.*)/(.*)$ category.php?id=$1&slug=$2
+RewriteRule ^source/(.*)/(.*)$ source.php?id=$1&slug=$2
+RewriteRule ^news/(.*)/(.*)$ news.php?id=$1&slug=$2
+RewriteRule ^page/(.*)/(.*)$ page.php?id=$1&slug=$2
+RewriteRule ^search/(.*)$ search.php?q=$1
+RewriteRule ^us-map/?$ states-map.php [L,QSA,NC]
+RewriteRule ^states-map/?$ states-map.php [L,QSA,NC]
+RewriteRule ^terms(?:-and-conditions|conditions)?/?$ terms-conditions.php [L,QSA,NC]
+RewriteRule ^privacy(?:-and-security-policy|security-policy)?/?$ privacy-security-policy.php [L,QSA,NC]
+RewriteRule ^contact/?$ contact.php [L,QSA,NC]
+RewriteRule ^contact-us/?$ contact.php [L,QSA,NC]
+RewriteRule ^support/?$ support.php [L,QSA,NC]
+RewriteRule ^support-ticket/?$ support.php [L,QSA,NC]
+RewriteRule ^ticket/?$ support.php [L,QSA,NC]
+RewriteRule ^tickets/?$ support.php [L,QSA,NC]
+RewriteRule ^approved-tips/?$ approved-tips.php [L,QSA,NC]
+RewriteRule ^approved-tips/([0-9]+)/?$ approved-tips.php?news_id=$1 [L,QSA,NC]
+RewriteRule ^not-found$ notfound.php
+RewriteRule ^rss.xml$ rss.php
+RewriteRule ^sitemap-(.*).xml$ sitemap.php?id=$1
+RewriteRule ^categories-sitemap.xml$ categories-sitemap.php
