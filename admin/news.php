@@ -565,7 +565,24 @@ function rss_ai_image_prompt_from_subject($subject, $variant = 'cover') {
 		$subject = 'news and public awareness';
 	}
 
-	$core_prompt = 'Create a symbolic, editorial-style illustration for a news article about: ' . $subject . '. Use neutral objects, maps, documents, roads, bulletin boards, and atmospheric lighting. Avoid depicting minors, missing people, injuries, violence, fear, police action, or identifiable real people. No text, no logos, no watermarks.';
+	$cover_palettes = array(
+		'vivid warm palette with amber, gold, rust, and deep orange tones',
+		'cinematic sunset palette with red, copper, maroon, and soft cream highlights',
+		'bright editorial palette with teal accents, warm beige, and muted coral details'
+	);
+	$middle_palettes = array(
+		'cool blue palette with navy, cyan, steel gray, and white accents',
+		'muted green palette with forest, sage, slate, and pale gray tones',
+		'violet and indigo palette with silver, charcoal, and soft light-blue highlights'
+	);
+
+	$palette_list = ($variant === 'middle') ? $middle_palettes : $cover_palettes;
+	$palette = $palette_list[mt_rand(0, count($palette_list) - 1)];
+	$style_note = ($variant === 'middle')
+		? 'Make it visually distinct from the cover, with a calmer composition and a different dominant color family.'
+		: 'Make it bold, with a strong focal point and clearly different dominant colors from the supporting image.';
+
+	$core_prompt = 'Create a symbolic, editorial-style illustration for a news article about: ' . $subject . '. Use neutral objects, maps, documents, roads, bulletin boards, and atmospheric lighting. Dominant color direction: ' . $palette . '. Avoid depicting minors, missing people, injuries, violence, fear, police action, or identifiable real people. No text, no logos, no watermarks. ' . $style_note;
 
 	if ($variant === 'middle') {
 		return $core_prompt . ' Make this composition different from the cover and more focused on a supporting visual angle.';
