@@ -13,6 +13,8 @@ $disclaimer_content = <<<HTML
 
 <p>Missing USA is an independent informational platform focused on awareness of missing children and missing adults in the United States.</p>
 
+<p><strong>Missing USA is an independent informational website and is not affiliated with any law enforcement agency or government organization unless explicitly stated.</strong></p>
+
 <h2>Informational Use Only</h2>
 
 <p>All content on this website is provided for general informational and public-awareness purposes only. It is not legal advice, investigative advice, emergency guidance, or official law-enforcement communication.</p>
@@ -36,6 +38,8 @@ $disclaimer_content = <<<HTML
 <h2>Emergency and Tip Guidance</h2>
 
 <p>If you have urgent or credible information about an active case, contact local law enforcement immediately. Do not rely solely on this website in emergency situations.</p>
+
+<p><strong>For emergencies, call 911.</strong></p>
 
 <h2>Limitation of Liability</h2>
 
