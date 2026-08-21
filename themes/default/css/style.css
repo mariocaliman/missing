@@ -1409,6 +1409,12 @@ color:#49596c;
 }
 
 /* US cases map page */
+.map-full-content {
+width:calc(100vw - 24px);
+max-width:none;
+margin-left:calc(50% - 50vw + 12px);
+margin-right:calc(50% - 50vw + 12px);
+}
 .map-page-card {
 padding-bottom:18px;
 }
@@ -1442,7 +1448,8 @@ letter-spacing:.06em;
 color:#4f6682;
 }
 .us-cases-map {
-height:720px;
+height:78vh;
+min-height:740px;
 margin:8px 18px 0;
 border:1px solid #d8e6f6;
 border-radius:12px;
@@ -1468,8 +1475,14 @@ font-size:13px;
 }
 
 @media only screen and (max-width: 1199px) {
+.map-full-content {
+width:auto;
+margin-left:0;
+margin-right:0;
+}
 .us-cases-map {
-height:640px;
+height:70vh;
+min-height:580px;
 }
 }
 
@@ -1478,7 +1491,8 @@ height:640px;
 grid-template-columns:1fr;
 }
 .us-cases-map {
-height:460px;
+height:62vh;
+min-height:420px;
 margin:8px 12px 0;
 }
 .map-help-text {
