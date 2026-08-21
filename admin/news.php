@@ -529,38 +529,32 @@ function rss_save_generated_news_image($binary, $prefix, &$error_message = '', $
 		$base_name = intval($article_id) . '_' . time() . '_' . mt_rand(1000,9999);
 	}
 
-	$image = false;
-	if (function_exists('imagecreatefromstring')) {
-		$image = @imagecreatefromstring($binary);
-	}
-
-	if ($image !== false && function_exists('imagewebp')) {
-		if (function_exists('imagepalettetotruecolor')) {
-			@imagepalettetotruecolor($image);
-		}
-		imagealphablending($image, true);
-		imagesavealpha($image, true);
-		$filename = $base_name . '.webp';
-		$target = $dir . $filename;
-		$saved = @imagewebp($image, $target, 82);
-		imagedestroy($image);
-		if ($saved) {
-			return $filename;
-		}
-	}
-
-	if ($image !== false) {
-		imagedestroy($image);
-	}
-
-	$filename = $base_name . '.png';
-	$target = $dir . $filename;
-	if (@file_put_contents($target, $binary) === false) {
-		$error_message = 'Could not save generated image file.';
+	if (!function_exists('imagecreatefromstring') || !function_exists('imagewebp')) {
+		$error_message = 'Server does not support WebP conversion for generated images.';
 		return '';
 	}
 
-	return $filename;
+	$image = @imagecreatefromstring($binary);
+	if ($image === false) {
+		$error_message = 'Could not decode generated image for WebP conversion.';
+		return '';
+	}
+
+	if (function_exists('imagepalettetotruecolor')) {
+		@imagepalettetotruecolor($image);
+	}
+	imagealphablending($image, true);
+	imagesavealpha($image, true);
+	$filename = $base_name . '.webp';
+	$target = $dir . $filename;
+	$saved = @imagewebp($image, $target, 82);
+	imagedestroy($image);
+	if ($saved) {
+		return $filename;
+	}
+
+	$error_message = 'Could not save generated image as WebP.';
+	return '';
 }
 }
 
