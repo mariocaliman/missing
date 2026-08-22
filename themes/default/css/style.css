@@ -128,10 +128,18 @@ position:relative;
 padding:18px 16px 16px;
 border-radius:18px;
 background:linear-gradient(135deg, #fff6a8 0%, #ffe16b 45%, #f8be1f 100%);
-border:1px solid #d69f00;
+border:2px solid #9f6d00;
 box-shadow:0 18px 42px rgba(214, 159, 0, 0.28);
 color:#1b1b1b;
 overflow:hidden;
+}
+.donate-widget-card:after {
+content:"";
+position:absolute;
+inset:6px;
+border:1px solid rgba(122, 82, 0, 0.5);
+border-radius:12px;
+pointer-events:none;
 }
 .donate-widget-card:before {
 content:"";
