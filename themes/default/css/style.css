@@ -1645,6 +1645,58 @@ color:#45566c;
 margin-top:16px;
 }
 
+.modern-share {
+border:1px solid #d7e2ef;
+border-radius:12px;
+background:#ffffff;
+padding:14px;
+box-shadow:0 8px 20px rgba(17, 31, 49, 0.06);
+}
+.modern-share .share-context {
+margin:0 0 10px;
+font-size:13px;
+line-height:1.5;
+color:#4a5a6e;
+}
+.modern-share .share-grid {
+display:grid;
+grid-template-columns:repeat(2, minmax(0, 1fr));
+gap:8px;
+}
+.modern-share .share-btn {
+display:inline-flex;
+align-items:center;
+justify-content:center;
+gap:7px;
+border:1px solid #d6dfeb;
+border-radius:9px;
+padding:9px 10px;
+background:#f8fbff;
+color:#1b314d;
+font-weight:700;
+font-size:13px;
+text-decoration:none;
+transition:all .2s ease;
+cursor:pointer;
+}
+.modern-share .share-btn:hover,
+.modern-share .share-btn:focus {
+text-decoration:none;
+transform:translateY(-1px);
+border-color:#b5c8dd;
+background:#eef5fd;
+color:#12273f;
+}
+.modern-share .share-btn i {
+font-size:15px;
+}
+
+@media only screen and (min-width: 768px) {
+.modern-share .share-grid {
+grid-template-columns:repeat(3, minmax(0, 1fr));
+}
+}
+
 @media only screen and (max-width: 992px) {
 .explained-hero h1 {
 font-size:34px;
