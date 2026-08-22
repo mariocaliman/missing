@@ -20,9 +20,15 @@
 	<meta property="og:url" content="{$article_url}" />
 	<meta property="og:title" content="{$article_title|html_decode}" />
 	<meta property="og:description" content="{$seo_description}" />
+	<meta name="twitter:title" content="{$article_title|html_decode}" />
+	<meta name="twitter:description" content="{$seo_description}" />
 	{if !empty($thumbnail_url)}
 	<meta property="og:image" content="{$thumbnail_url}" />
+	<meta name="twitter:image" content="{$thumbnail_url}" />
+	<meta name="twitter:card" content="summary_large_image" />
 	<link rel="preload" as="image" href="{$thumbnail_url}" />
+	{else}
+	<meta name="twitter:card" content="summary" />
 	{/if}
 	<meta property="og:type" content="article" />
 	<meta property="article:publisher" content="{$general_seo_title}" />		
