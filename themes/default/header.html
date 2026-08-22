@@ -22,6 +22,8 @@
 	<meta property="og:description" content="{$seo_description}" />
 	<meta name="twitter:title" content="{$article_title|html_decode}" />
 	<meta name="twitter:description" content="{$seo_description}" />
+	{if isset($general_twitter_site) AND !empty($general_twitter_site)}<meta name="twitter:site" content="{$general_twitter_site|escape}" />{/if}
+	{if isset($general_twitter_creator) AND !empty($general_twitter_creator)}<meta name="twitter:creator" content="{$general_twitter_creator|escape}" />{/if}
 	{if !empty($thumbnail_url)}
 	<meta property="og:image" content="{$thumbnail_url}" />
 	<meta name="twitter:image" content="{$thumbnail_url}" />

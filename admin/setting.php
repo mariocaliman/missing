@@ -334,6 +334,14 @@ $options = $general->get_options('General');
 			<textarea class="form-control" name="seo_description" id="seo_description" rows="3" placeholder="some words about the site .. don't exceed 255 character."><?php echo $options['seo_description']; ?></textarea>
 		  </div>
 		  <div class="form-group">
+			<label for="twitter_site">Twitter Site (optional)</label>
+			<input type="text" class="form-control" name="twitter_site" id="twitter_site" placeholder="@missingusa" value="<?php if (isset($options['twitter_site'])) { echo $options['twitter_site']; } ?>" />
+		  </div>
+		  <div class="form-group">
+			<label for="twitter_creator">Twitter Creator (optional)</label>
+			<input type="text" class="form-control" name="twitter_creator" id="twitter_creator" placeholder="@editorname" value="<?php if (isset($options['twitter_creator'])) { echo $options['twitter_creator']; } ?>" />
+		  </div>
+		  <div class="form-group">
 			<label for="top_news_period">Top News Period (Days)</label>
 			<select name="top_news_period" id="top_news_period" class="form-control">
 				<option value="86400" <?php if ($options['top_news_period'] == 86400) {echo 'SELECTED';} ?>>Today</option>
