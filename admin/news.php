@@ -771,7 +771,7 @@ if ($is_editorial_category && empty($_FILES['middle_image']['name']) && $generat
 	rss_save_generated_news_image($generated_middle_bytes, 'ai-middle', $middle_image_error, $article_id, true);
 }
 if (!$is_editorial_category && !empty($_FILES['middle_image']['name'])) {
-	$middle_image_error = 'Middle image was ignored because this category is not Explained/Cases & Stories.';
+	$middle_image_error = 'Middle image was ignored because this category is not Explained/Cases & Stories/Famous Missing Persons Cases.';
 }
 	$warnings = array();
 	if ($middle_image_error !== '') {
@@ -1033,7 +1033,7 @@ if ($is_editorial_category && !empty($_FILES['middle_image']['name'])) {
 if (!$is_editorial_category) {
 	rss_delete_middle_image($id);
 	if (!empty($_FILES['middle_image']['name'])) {
-		$middle_image_error = 'Middle image was ignored because this category is not Explained/Cases & Stories.';
+		$middle_image_error = 'Middle image was ignored because this category is not Explained/Cases & Stories/Famous Missing Persons Cases.';
 	}
 }
 if ($middle_image_error !== '') {
