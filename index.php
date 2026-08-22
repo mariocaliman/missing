@@ -1,5 +1,15 @@
 <?php
 include(__DIR__ . '/include/autoloader.php');
+include(__DIR__ . '/include/donation_tracking.php');
+
+if (($mysqli instanceof mysqli) && !$mysqli->connect_errno) {
+	$donation_status = isset($_GET['donation_status']) ? trim($_GET['donation_status']) : '';
+	$donation_ref = isset($_GET['donation_ref']) ? trim($_GET['donation_ref']) : '';
+	if ($donation_status === 'cancel' && $donation_ref !== '') {
+		donation_tracking_mark_status($mysqli, $donation_ref, 'cancel');
+	}
+}
+
 $smarty->assign('is_home',1); // to use with menu (home select)
 $latest_home = array();
 if ($mysqli instanceof mysqli && !$mysqli->connect_errno) {

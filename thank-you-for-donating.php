@@ -1,5 +1,14 @@
 <?php
 include(__DIR__ . '/include/autoloader.php');
+include(__DIR__ . '/include/donation_tracking.php');
+
+if (($mysqli instanceof mysqli) && !$mysqli->connect_errno) {
+  $donation_status = isset($_GET['donation_status']) ? trim($_GET['donation_status']) : '';
+  $donation_ref = isset($_GET['donation_ref']) ? trim($_GET['donation_ref']) : '';
+  if ($donation_status === 'success' && $donation_ref !== '') {
+    donation_tracking_mark_status($mysqli, $donation_ref, 'success');
+  }
+}
 
 if (!isset($general_setting['siteurl'])) {
     $general_setting['siteurl'] = './';

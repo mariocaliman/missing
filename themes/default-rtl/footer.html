@@ -156,16 +156,51 @@
 		return window.open(url, 'missingusa_donate', 'width=' + width + ',height=' + height + ',left=' + left + ',top=' + top + ',noopener,noreferrer');
 	}
 
+	function buildFallbackUrl(originalUrl) {
+		if (!originalUrl) {
+			return '';
+		}
+		var connector = originalUrl.indexOf('?') === -1 ? '?' : '&';
+		var returnUrl = './thank-you-for-donating?donation_status=success';
+		var cancelUrl = './?donation_status=cancel';
+		return originalUrl + connector + 'return=' + encodeURIComponent(returnUrl) + '&cancel_return=' + encodeURIComponent(cancelUrl);
+	}
+
+	function fetchTrackedUrl(pagePath) {
+		return fetch('./donate-track.php', {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+			},
+			body: 'page=' + encodeURIComponent(pagePath || window.location.pathname)
+		}).then(function (response) {
+			if (!response.ok) {
+				throw new Error('Tracking request failed');
+			}
+			return response.json();
+		});
+	}
+
 	document.addEventListener('click', function (event) {
 		var trigger = event.target && typeof event.target.closest === 'function' ? event.target.closest('[data-donate-popup="1"]') : null;
 		if (!trigger) {
 			return;
 		}
 		event.preventDefault();
-		var popup = openPopup(trigger.getAttribute('href') || '');
-		if (popup && typeof popup.focus === 'function') {
-			popup.focus();
-		}
+
+		var fallbackUrl = buildFallbackUrl(trigger.getAttribute('href') || '');
+		fetchTrackedUrl(window.location.pathname).then(function (data) {
+			var destination = (data && data.ok && data.paypal_url) ? data.paypal_url : fallbackUrl;
+			var popup = openPopup(destination || fallbackUrl);
+			if (popup && typeof popup.focus === 'function') {
+				popup.focus();
+			}
+		}).catch(function () {
+			var popup = openPopup(fallbackUrl);
+			if (popup && typeof popup.focus === 'function') {
+				popup.focus();
+			}
+		});
 	});
 })();
 </script>

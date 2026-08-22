@@ -66,6 +66,7 @@ $currenttab = $parts[count($parts) - 1];
                     <li <?php if ($currenttab == 'sources.php') { ?>class="active"<?php } ?>><a href="sources.php"><span class="fa fa-rss"></span> Sources</a></li>
 					<li <?php if ($currenttab == 'news.php') { ?>class="active"<?php } ?>><a href="news.php"><span class="fa fa-newspaper-o"></span> News</a></li>
 					<li <?php if ($currenttab == 'tips.php') { ?>class="active"<?php } ?>><a href="tips.php"><span class="fa fa-shield"></span> Tips</a></li>
+					<li <?php if ($currenttab == 'donations.php') { ?>class="active"<?php } ?>><a href="donations.php"><span class="fa fa-heart"></span> Donations</a></li>
 					<li <?php if ($currenttab == 'tickets.php') { ?>class="active"<?php } ?>><a href="tickets.php"><span class="fa fa-life-ring"></span> Tickets</a></li>
 					<li <?php if ($currenttab == 'links.php') { ?>class="active"<?php } ?>><a href="links.php"><span class="fa fa-link"></span> Links</a></li>
 					<li <?php if ($currenttab == 'pages.php') { ?>class="active"<?php } ?>><a href="pages.php"><span class="fa fa-file"></span> Pages</a></li>
