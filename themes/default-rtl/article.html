@@ -71,23 +71,17 @@
 <p>If you recognize this person or have credible information, contact local law enforcement immediately.</p>
 </div>
 <div class="article-share">
-<div class="modern-share" data-share-url="{$article_url|escape}" data-share-title="{$article_title|html_decode|escape}" data-share-text="{$seo_description|escape}">
-<p class="share-context">Share this case with image, short context, and poster access to increase visibility responsibly.</p>
-<div class="share-grid">
-<a target="_blank" rel="noopener" href="https://www.facebook.com/sharer/sharer.php?u={$article_url|escape:'url'}" class="share-btn share-facebook"><i class="fa fa-facebook" aria-hidden="true"></i><span>Facebook</span></a>
-<a target="_blank" rel="noopener" href="https://twitter.com/intent/tweet?url={$article_url|escape:'url'}&amp;text={$article_title|html_decode|escape:'url'}" class="share-btn share-x"><i class="fa fa-twitter" aria-hidden="true"></i><span>X</span></a>
-<a target="_blank" rel="noopener" href="https://wa.me/?text={$article_title|html_decode|escape:'url'}%20-%20{$article_url|escape:'url'}" class="share-btn share-whatsapp"><i class="fa fa-whatsapp" aria-hidden="true"></i><span>WhatsApp</span></a>
-<a target="_blank" rel="noopener" href="https://t.me/share/url?url={$article_url|escape:'url'}&amp;text={$article_title|html_decode|escape:'url'}" class="share-btn share-telegram"><i class="fa fa-telegram" aria-hidden="true"></i><span>Telegram</span></a>
-<a target="_blank" rel="noopener" href="https://www.reddit.com/submit?url={$article_url|escape:'url'}&amp;title={$article_title|html_decode|escape:'url'}" class="share-btn share-reddit"><i class="fa fa-reddit" aria-hidden="true"></i><span>Reddit</span></a>
-<a href="mailto:?subject={$article_title|html_decode|escape:'url'}&amp;body={$seo_description|escape:'url'}%0A%0A{$article_url|escape:'url'}" class="share-btn share-email"><i class="fa fa-envelope" aria-hidden="true"></i><span>Email</span></a>
-{if !empty($thumbnail_url)}
-<a target="_blank" rel="noopener" href="https://pinterest.com/pin/create/button/?url={$article_url|escape:'url'}&amp;media={$thumbnail_url|escape:'url'}&amp;description={$seo_description|escape:'url'}" class="share-btn share-pinterest"><i class="fa fa-pinterest" aria-hidden="true"></i><span>Pin</span></a>
-{/if}
-<a href="./print-poster.php?id={$article_id}" target="_blank" rel="noopener" class="share-btn share-print"><i class="fa fa-print" aria-hidden="true"></i><span>Print Poster</span></a>
-<button type="button" class="share-btn share-copy" data-copy-url="{$article_url|escape}"><i class="fa fa-link" aria-hidden="true"></i><span>Copy Link</span></button>
-<button type="button" class="share-btn share-native" data-native-title="{$article_title|html_decode|escape}" data-native-text="{$seo_description|escape}" data-native-url="{$article_url|escape}" aria-label="More sharing options"><i class="fa fa-share-alt" aria-hidden="true"></i><span>More</span></button>
+<!-- ShareThis BEGINS -->
+<div class="sharethis-share-buttons" data-type="inline-share-buttons" data-labels="counts" data-show_total="false">
+<span data-network="facebook"></span>
+<span data-network="twitter"></span>
+<span data-network="sms"></span>
+<span data-network="pinterest"></span>
+<span data-network="whatsapp"></span>
+<span data-network="email"></span>
+<span data-network="sharethis"></span>
 </div>
-</div>
+<!-- ShareThis ENDS -->
 </div>
 <!-- Start Content Advertisement -->
 {if !empty($content_ad)}
@@ -123,66 +117,6 @@
 </ul>
 </div>
 {/if}
-{literal}
-<script>
-(function () {
-    function setFeedback(button, text) {
-        if (!button) {
-            return;
-        }
-        var original = button.getAttribute('data-original-label');
-        if (!original) {
-            original = button.innerHTML;
-            button.setAttribute('data-original-label', original);
-        }
-        button.innerHTML = '<i class="fa fa-check" aria-hidden="true"></i><span>' + text + '</span>';
-        window.setTimeout(function () {
-            button.innerHTML = original;
-        }, 1800);
-    }
-
-    function initCopyButtons() {
-        var copyButtons = document.querySelectorAll('.share-copy');
-        Array.prototype.forEach.call(copyButtons, function (button) {
-            button.addEventListener('click', function () {
-                var url = button.getAttribute('data-copy-url') || window.location.href;
-                if (navigator.clipboard && navigator.clipboard.writeText) {
-                    navigator.clipboard.writeText(url).then(function () {
-                        setFeedback(button, 'Copied');
-                    }).catch(function () {
-                        window.prompt('Copy this link:', url);
-                    });
-                } else {
-                    window.prompt('Copy this link:', url);
-                }
-            });
-        });
-    }
-
-    function initNativeShare() {
-        var shareButtons = document.querySelectorAll('.share-native');
-        if (!navigator.share) {
-            Array.prototype.forEach.call(shareButtons, function (button) {
-                button.style.display = 'none';
-            });
-            return;
-        }
-        Array.prototype.forEach.call(shareButtons, function (button) {
-            button.addEventListener('click', function () {
-                navigator.share({
-                    title: button.getAttribute('data-native-title') || document.title,
-                    text: button.getAttribute('data-native-text') || '',
-                    url: button.getAttribute('data-native-url') || window.location.href
-                }).catch(function () {});
-            });
-        });
-    }
-
-    initCopyButtons();
-    initNativeShare();
-})();
-</script>
-{/literal}
 {if $general_display_disqus_comments eq 1}
 <div id="disqus_thread"></div>
 {literal}
