@@ -764,6 +764,57 @@ font-size:13px;
 }
 }
 
+/* Important resources page */
+.resource-content {
+line-height:1.7;
+}
+.resource-content h2 {
+margin:26px 0 10px;
+font-size:27px;
+font-family:'Titillium Web', Arial;
+font-weight:700;
+color:#24384d;
+}
+.resource-content h3 {
+margin:18px 0 8px;
+font-size:21px;
+font-family:'Titillium Web', Arial;
+font-weight:700;
+color:#2f4a66;
+}
+.resource-content p,
+.resource-content li {
+font-size:16px;
+color:#34495e;
+}
+.resource-content ul,
+.resource-content ol {
+padding-left:24px;
+margin:8px 0 14px;
+}
+.resource-content ul {
+list-style:disc;
+}
+.resource-content .resource-intro {
+margin-top:14px;
+padding:16px 18px;
+border:1px solid #d7e5f1;
+border-radius:14px;
+background:linear-gradient(135deg, #f7fbff 0%, #eef6ff 100%);
+}
+.resource-content .resource-intro h2 {
+margin-top:0;
+}
+.resource-content .resources-table {
+margin-top:12px;
+border-radius:10px;
+overflow:hidden;
+}
+.resource-content .resources-table th {
+background:#edf4fc;
+color:#1f3650;
+}
+
 /* Varient-like home redesign */
 :root {
 --page-bg:#f3f5f7;
