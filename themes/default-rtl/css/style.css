@@ -947,6 +947,7 @@ color:#4a5a6e;
 display:grid;
 grid-template-columns:repeat(2, minmax(0, 1fr));
 gap:8px;
+align-items:stretch;
 }
 .modern-share .share-btn {
 display:inline-flex;
@@ -963,6 +964,8 @@ font-size:13px;
 text-decoration:none;
 transition:all .2s ease;
 cursor:pointer;
+min-height:40px;
+line-height:1.2;
 }
 .modern-share .share-btn:hover,
 .modern-share .share-btn:focus {
@@ -974,11 +977,24 @@ color:#12273f;
 }
 .modern-share .share-btn i {
 font-size:15px;
+flex:0 0 auto;
+}
+.modern-share .share-btn span {
+display:block;
+overflow:hidden;
+text-overflow:ellipsis;
+white-space:nowrap;
 }
 
 @media only screen and (min-width: 768px) {
 .modern-share .share-grid {
 grid-template-columns:repeat(3, minmax(0, 1fr));
+}
+}
+
+@media only screen and (max-width: 480px) {
+.modern-share .share-grid {
+grid-template-columns:1fr;
 }
 }
 

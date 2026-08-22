@@ -72,7 +72,7 @@
 </div>
 <div class="article-share">
 <div class="modern-share" data-share-url="{$article_url|escape}" data-share-title="{$article_title|html_decode|escape}" data-share-text="{$seo_description|escape}">
-<p class="share-context">{$seo_description|escape}</p>
+<p class="share-context">Share this case with image, short context, and poster access to increase visibility responsibly.</p>
 <div class="share-grid">
 <a target="_blank" rel="noopener" href="https://www.facebook.com/sharer/sharer.php?u={$article_url|escape:'url'}" class="share-btn share-facebook"><i class="fa fa-facebook" aria-hidden="true"></i><span>Facebook</span></a>
 <a target="_blank" rel="noopener" href="https://twitter.com/intent/tweet?url={$article_url|escape:'url'}&amp;text={$article_title|html_decode|escape:'url'}" class="share-btn share-x"><i class="fa fa-twitter" aria-hidden="true"></i><span>X</span></a>
@@ -85,7 +85,7 @@
 {/if}
 <a href="./print-poster.php?id={$article_id}" target="_blank" rel="noopener" class="share-btn share-print"><i class="fa fa-print" aria-hidden="true"></i><span>Print Poster</span></a>
 <button type="button" class="share-btn share-copy" data-copy-url="{$article_url|escape}"><i class="fa fa-link" aria-hidden="true"></i><span>Copy Link</span></button>
-<button type="button" class="share-btn share-native" data-native-title="{$article_title|html_decode|escape}" data-native-text="{$seo_description|escape}" data-native-url="{$article_url|escape}"><i class="fa fa-share-alt" aria-hidden="true"></i><span>Share...</span></button>
+<button type="button" class="share-btn share-native" data-native-title="{$article_title|html_decode|escape}" data-native-text="{$seo_description|escape}" data-native-url="{$article_url|escape}" aria-label="More sharing options"><i class="fa fa-share-alt" aria-hidden="true"></i><span>More</span></button>
 </div>
 </div>
 </div>
