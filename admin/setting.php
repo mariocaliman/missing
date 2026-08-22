@@ -30,8 +30,24 @@ $options = $general->get_options('AI');
 		<?php if (isset($message)) {echo $message;} ?>
 		<form role="form" method="POST" action="">
 		  <div class="alert alert-info">
-			Use these settings for AI draft generation in Add Article.
+			Use these settings for AI draft generation in Add Article and for Google reCAPTCHA validation in public forms.
 		  </div>
+		  <div class="panel panel-default">
+			<div class="panel-heading"><strong>Google reCAPTCHA</strong></div>
+			<div class="panel-body">
+			  <div class="form-group">
+				<label for="google_recaptcha_site_key">Site Key</label>
+				<input type="text" class="form-control" name="google_recaptcha_site_key" id="google_recaptcha_site_key" value="<?php if (isset($options['google_recaptcha_site_key'])) {echo htmlspecialchars_decode($options['google_recaptcha_site_key'],ENT_QUOTES);} ?>" autocomplete="off" />
+			  </div>
+			  <div class="form-group">
+				<label for="google_recaptcha_secret_key">Secret Key</label>
+				<input type="password" class="form-control" name="google_recaptcha_secret_key" id="google_recaptcha_secret_key" value="<?php if (isset($options['google_recaptcha_secret_key'])) {echo htmlspecialchars_decode($options['google_recaptcha_secret_key'],ENT_QUOTES);} ?>" autocomplete="off" />
+			  </div>
+			</div>
+		  </div>
+		  <div class="panel panel-default">
+			<div class="panel-heading"><strong>OpenAI</strong></div>
+			<div class="panel-body">
 		  <div class="form-group">
 			<label for="openai_api_key">OpenAI API Key</label>
 			<input type="password" class="form-control" name="openai_api_key" id="openai_api_key" value="<?php if (isset($options['openai_api_key'])) {echo htmlspecialchars_decode($options['openai_api_key'],ENT_QUOTES);} ?>" autocomplete="off" />
@@ -51,6 +67,8 @@ $options = $general->get_options('AI');
 		  <div class="form-group">
 			<label for="openai_image_endpoint">Image Endpoint</label>
 			<input type="text" class="form-control" name="openai_image_endpoint" id="openai_image_endpoint" value="<?php if (isset($options['openai_image_endpoint']) AND !empty($options['openai_image_endpoint'])) {echo htmlspecialchars_decode($options['openai_image_endpoint'],ENT_QUOTES);} else {echo 'https://api.openai.com/v1/images/generations';} ?>" />
+		  </div>
+			</div>
 		  </div>
 		  <button type="submit" name="save" class="btn btn-primary">Save</button>
 		</form>

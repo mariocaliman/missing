@@ -43,12 +43,20 @@
 <label for="tip_message">Tip Details *</label>
 <textarea class="form-control" id="tip_message" name="tip_message" rows="8" placeholder="Provide specific details about what you saw or know.">{$form_data.tip_message|escape}</textarea>
 </div>
+{if isset($recaptcha_site_key) AND !empty($recaptcha_site_key)}
+<div class="form-group">
+<div class="g-recaptcha" data-sitekey="{$recaptcha_site_key|escape}"></div>
+</div>
+{/if}
 <div class="tip-form-actions">
 <button type="submit" class="btn btn-danger btn-lg">Submit Tip</button>
 <a href="./print-poster.php?id={$tip_article.id}" target="_BLANK" class="btn btn-default btn-lg">Print Poster</a>
 <a href="{$tip_poster_url}" class="btn btn-link">Back to Case</a>
 </div>
 </form>
+{if isset($recaptcha_site_key) AND !empty($recaptcha_site_key)}
+<script src="https://www.google.com/recaptcha/api.js" async defer></script>
+{/if}
 </div>
 </div>
 </div>

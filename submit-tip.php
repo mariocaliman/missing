@@ -10,6 +10,14 @@ if (!($mysqli instanceof mysqli) || $mysqli->connect_errno) {
     exit;
 }
 
+$api_options = array();
+if (isset($general) && $general) {
+    $api_options = $general->get_options('AI');
+}
+
+$recaptcha_site_key = isset($api_options['google_recaptcha_site_key']) ? trim((string) $api_options['google_recaptcha_site_key']) : '';
+$recaptcha_secret_key = isset($api_options['google_recaptcha_secret_key']) ? trim((string) $api_options['google_recaptcha_secret_key']) : '';
+
 ensure_news_tips_table();
 
 $news_id = 0;
@@ -54,6 +62,7 @@ $form_data = array(
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $token = isset($_POST['tip_form_token']) ? (string) $_POST['tip_form_token'] : '';
     $honeypot = isset($_POST['website']) ? trim((string) $_POST['website']) : '';
+    $recaptcha_response = isset($_POST['g-recaptcha-response']) ? (string) $_POST['g-recaptcha-response'] : '';
 
     $form_data['tip_name'] = isset($_POST['tip_name']) ? trim((string) $_POST['tip_name']) : '';
     $form_data['tip_email'] = isset($_POST['tip_email']) ? trim((string) $_POST['tip_email']) : '';
@@ -64,6 +73,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($token === '' || !hash_equals($_SESSION['tip_form_token'], $token)) {
         $form_message_type = 'danger';
         $form_message = 'Invalid request token. Refresh the page and try again.';
+    } elseif ($recaptcha_site_key !== '' && $recaptcha_secret_key !== '' && !verify_google_recaptcha($recaptcha_secret_key, $recaptcha_response, isset($_SERVER['REMOTE_ADDR']) ? (string) $_SERVER['REMOTE_ADDR'] : '')) {
+        $form_message_type = 'warning';
+        $form_message = 'Please complete the reCAPTCHA verification.';
     } elseif ($honeypot !== '') {
         $form_message_type = 'danger';
         $form_message = 'Invalid submission.';
@@ -126,6 +138,7 @@ $smarty->assign('tip_form_token', $_SESSION['tip_form_token']);
 $smarty->assign('form_message', $form_message);
 $smarty->assign('form_message_type', $form_message_type);
 $smarty->assign('form_data', $form_data);
+$smarty->assign('recaptcha_site_key', $recaptcha_site_key);
 
 $smarty->assign('seo_title', 'Submit a Tip - ' . htmlspecialchars_decode($article['title'], ENT_QUOTES));
 $smarty->assign('seo_keywords', title_to_keywords(htmlspecialchars_decode($article['title'], ENT_QUOTES)));

@@ -7,6 +7,55 @@ function make_safe($str)
 	return strip_tags(trim(htmlspecialchars($str,ENT_QUOTES)));
 }
 
+function verify_google_recaptcha($secret_key, $response_token, $remote_ip = '')
+{
+	$secret_key = trim((string) $secret_key);
+	$response_token = trim((string) $response_token);
+	$remote_ip = trim((string) $remote_ip);
+
+	if ($secret_key === '' || $response_token === '') {
+		return false;
+	}
+
+	$post_fields = array(
+		'secret' => $secret_key,
+		'response' => $response_token
+	);
+	if ($remote_ip !== '') {
+		$post_fields['remoteip'] = $remote_ip;
+	}
+
+	$raw_response = false;
+	if (function_exists('curl_init')) {
+		$ch = curl_init('https://www.google.com/recaptcha/api/siteverify');
+		curl_setopt($ch, CURLOPT_POST, true);
+		curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($post_fields));
+		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+		curl_setopt($ch, CURLOPT_TIMEOUT, 15);
+		$raw_response = curl_exec($ch);
+		curl_close($ch);
+	}
+
+	if ($raw_response === false) {
+		$context = stream_context_create(array(
+			'http' => array(
+				'method' => 'POST',
+				'header' => "Content-Type: application/x-www-form-urlencoded\r\n",
+				'content' => http_build_query($post_fields),
+				'timeout' => 15
+			)
+		));
+		$raw_response = @file_get_contents('https://www.google.com/recaptcha/api/siteverify', false, $context);
+	}
+
+	if ($raw_response === false || $raw_response === '') {
+		return false;
+	}
+
+	$data = json_decode($raw_response, true);
+	return is_array($data) && !empty($data['success']);
+}
+
 // function to get the current url
 function curPageURL() 
 {

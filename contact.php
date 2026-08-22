@@ -9,6 +9,14 @@ if (!isset($general_setting['siteurl'])) {
     $general_setting['siteurl'] = './';
 }
 
+$api_options = array();
+if (isset($general) && $general) {
+    $api_options = $general->get_options('AI');
+}
+
+$recaptcha_site_key = isset($api_options['google_recaptcha_site_key']) ? trim((string) $api_options['google_recaptcha_site_key']) : '';
+$recaptcha_secret_key = isset($api_options['google_recaptcha_secret_key']) ? trim((string) $api_options['google_recaptcha_secret_key']) : '';
+
 if (empty($_SESSION['contact_form_token'])) {
     $_SESSION['contact_form_token'] = bin2hex(random_bytes(24));
 }
@@ -25,6 +33,7 @@ $form_data = array(
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $token = isset($_POST['contact_form_token']) ? (string) $_POST['contact_form_token'] : '';
     $honeypot = isset($_POST['website']) ? trim((string) $_POST['website']) : '';
+    $recaptcha_response = isset($_POST['g-recaptcha-response']) ? (string) $_POST['g-recaptcha-response'] : '';
 
     $form_data['contact_name'] = isset($_POST['contact_name']) ? trim((string) $_POST['contact_name']) : '';
     $form_data['contact_email'] = isset($_POST['contact_email']) ? trim((string) $_POST['contact_email']) : '';
@@ -34,6 +43,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($token === '' || !hash_equals($_SESSION['contact_form_token'], $token)) {
         $form_message_type = 'danger';
         $form_message = 'Invalid request token. Refresh the page and try again.';
+    } elseif ($recaptcha_site_key !== '' && $recaptcha_secret_key !== '' && !verify_google_recaptcha($recaptcha_secret_key, $recaptcha_response, isset($_SERVER['REMOTE_ADDR']) ? (string) $_SERVER['REMOTE_ADDR'] : '')) {
+        $form_message_type = 'warning';
+        $form_message = 'Please complete the reCAPTCHA verification.';
     } elseif ($honeypot !== '') {
         $form_message_type = 'danger';
         $form_message = 'Invalid submission.';
@@ -92,6 +104,7 @@ $smarty->assign('contact_form_token', $_SESSION['contact_form_token']);
 $smarty->assign('form_message', $form_message);
 $smarty->assign('form_message_type', $form_message_type);
 $smarty->assign('form_data', $form_data);
+$smarty->assign('recaptcha_site_key', $recaptcha_site_key);
 
 $smarty->assign('seo_title', 'Contact Us - ' . $general_setting['seo_title']);
 $smarty->assign('seo_keywords', 'contact, missing persons, report information');

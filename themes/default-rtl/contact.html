@@ -39,10 +39,18 @@
 <label for="contact_message">Message *</label>
 <textarea class="form-control" id="contact_message" name="contact_message" rows="8" placeholder="Write your message here...">{$form_data.contact_message|escape}</textarea>
 </div>
+{if isset($recaptcha_site_key) AND !empty($recaptcha_site_key)}
+<div class="form-group">
+<div class="g-recaptcha" data-sitekey="{$recaptcha_site_key|escape}"></div>
+</div>
+{/if}
 <div class="tip-form-actions">
 <button type="submit" class="btn btn-danger btn-lg">Send Message</button>
 </div>
 </form>
+{if isset($recaptcha_site_key) AND !empty($recaptcha_site_key)}
+<script src="https://www.google.com/recaptcha/api.js" async defer></script>
+{/if}
 </div>
 </div>
 </div>
