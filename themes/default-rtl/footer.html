@@ -32,6 +32,29 @@
 <button type="button" id="cookie-consent-accept" class="cookie-consent-btn">Accept</button>
 </div>
 <script type="text/javascript" src="https://platform-api.sharethis.com/js/sharethis.js" defer></script>
+<div class="modal fade donate-modal" id="donate-modal" tabindex="-1" role="dialog" aria-labelledby="donateModalLabel">
+<div class="modal-dialog modal-dialog-centered" role="document">
+<div class="modal-content donate-modal-content">
+<div class="modal-header donate-modal-header">
+<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+<h4 class="modal-title" id="donateModalLabel"><i class="fa fa-heart"></i> Help Keep Missing USA Alive</h4>
+</div>
+<div class="modal-body donate-modal-body">
+<p class="donate-lead">Every search, every update, and every story on Missing USA takes time, care, and constant attention.</p>
+<p>Donations help us cover the real costs behind this mission: hosting, editorial work, verification, design improvements, and the AI tools we use to keep cases organized, readable, and visible for families who need support right now.</p>
+<div class="donate-highlight">
+<strong>Your support helps keep hope visible.</strong>
+<p>Even a small contribution helps us keep the lights on and continue building a place where missing people are not forgotten.</p>
+</div>
+<p class="donate-note">If you can give, thank you. If you cannot, sharing a case is still a meaningful way to help.</p>
+</div>
+<div class="modal-footer donate-modal-footer">
+<a class="btn btn-default" href="#" data-dismiss="modal">Maybe later</a>
+<a class="btn btn-danger donate-paypal-btn" href="{$donate_paypal_url|escape:'html'}" data-donate-popup="1">Continue to PayPal</a>
+</div>
+</div>
+</div>
+</div>
 <script>
 (function () {
 	var banner = document.getElementById('cookie-consent-banner');
@@ -120,6 +143,28 @@
 			track('submit_tip_click', { page_path: window.location.pathname });
 		} else if (href.indexOf('/contact') !== -1 || href.indexOf('mailto:contact@missing-usa.com') !== -1) {
 			track('contact_click', { page_path: window.location.pathname });
+		}
+	});
+})();
+
+(function () {
+	function openPopup(url) {
+		var width = 560;
+		var height = 720;
+		var left = window.screenX + Math.max(0, (window.outerWidth - width) / 2);
+		var top = window.screenY + Math.max(0, (window.outerHeight - height) / 2);
+		return window.open(url, 'missingusa_donate', 'width=' + width + ',height=' + height + ',left=' + left + ',top=' + top + ',noopener,noreferrer');
+	}
+
+	document.addEventListener('click', function (event) {
+		var trigger = event.target && typeof event.target.closest === 'function' ? event.target.closest('[data-donate-popup="1"]') : null;
+		if (!trigger) {
+			return;
+		}
+		event.preventDefault();
+		var popup = openPopup(trigger.getAttribute('href') || '');
+		if (popup && typeof popup.focus === 'function') {
+			popup.focus();
 		}
 	});
 })();

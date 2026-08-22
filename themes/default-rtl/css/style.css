@@ -806,6 +806,143 @@ clear:both;
 .header {
 margin:15px 0;
 }
+.header-ad {
+display:flex;
+align-items:flex-start;
+justify-content:space-between;
+gap:14px;
+flex-wrap:wrap;
+}
+.header-actions {
+display:flex;
+justify-content:flex-end;
+align-items:center;
+width:100%;
+margin-bottom:10px;
+}
+.header-ad-slot {
+width:100%;
+}
+.donate-btn {
+display:inline-flex;
+align-items:center;
+gap:8px;
+padding:10px 16px;
+border-radius:999px;
+background:linear-gradient(135deg, #e03b4d 0%, #b51f35 100%);
+border:1px solid #b51f35;
+color:#fff;
+font-family:'Titillium Web', Arial;
+font-weight:700;
+letter-spacing:.04em;
+text-transform:uppercase;
+box-shadow:0 8px 20px rgba(181, 31, 53, 0.22);
+transition:transform .2s ease, box-shadow .2s ease, filter .2s ease;
+}
+.donate-btn:hover,
+.donate-btn:focus {
+color:#fff;
+text-decoration:none;
+transform:translateY(-1px);
+box-shadow:0 12px 26px rgba(181, 31, 53, 0.28);
+filter:saturate(1.05);
+}
+.donate-modal .modal-dialog {
+max-width:760px;
+}
+.donate-modal-content {
+border-radius:18px;
+overflow:hidden;
+border:1px solid #d8e1ec;
+box-shadow:0 24px 60px rgba(15, 34, 61, 0.25);
+}
+.donate-modal-header {
+background:linear-gradient(135deg, #0f223d 0%, #1f4d8f 100%);
+color:#fff;
+border-bottom:0;
+padding:18px 22px;
+}
+.donate-modal-header .close {
+opacity:0.9;
+color:#fff;
+text-shadow:none;
+}
+.donate-modal-body {
+padding:22px;
+font-size:16px;
+line-height:1.75;
+color:#304054;
+}
+.donate-lead {
+font-size:18px;
+font-weight:700;
+color:#1f3650;
+margin-bottom:14px;
+}
+.donate-highlight {
+margin:18px 0;
+padding:16px 18px;
+border-radius:14px;
+background:linear-gradient(135deg, #fff6f7 0%, #fff 100%);
+border:1px solid #f1c8cf;
+}
+.donate-highlight strong {
+display:block;
+font-size:17px;
+color:#9f142b;
+margin-bottom:6px;
+}
+.donate-note {
+margin-bottom:0;
+font-style:italic;
+color:#516072;
+}
+.donate-modal-footer {
+padding:16px 22px 22px;
+border-top:1px solid #edf1f6;
+}
+.donate-paypal-btn {
+background:#d73a49;
+border-color:#d73a49;
+}
+.donate-paypal-btn:hover,
+.donate-paypal-btn:focus {
+background:#bf2235;
+border-color:#bf2235;
+}
+.donation-thanks-page {
+padding:18px;
+}
+.donation-thanks-hero {
+margin:10px 0 18px;
+padding:18px 20px;
+border-radius:16px;
+background:linear-gradient(135deg, #f7fbff 0%, #eef6ff 100%);
+border:1px solid #d7e5f1;
+box-shadow:0 10px 24px rgba(15, 34, 61, 0.06);
+}
+.donation-thanks-lead {
+font-size:18px;
+font-weight:700;
+color:#1f3650;
+margin-bottom:10px;
+}
+.donation-thanks-page ul {
+list-style:disc;
+padding-right:22px;
+margin:12px 0 18px;
+}
+.donation-thanks-page h2 {
+margin-top:22px;
+font-size:25px;
+color:#24384d;
+}
+.donation-thanks-page p,
+.donation-thanks-page li {
+font-size:16px;
+line-height:1.75;
+color:#34495e;
+}
 .footer {
 margin:20px 0;
 padding:10px 0;
@@ -1141,6 +1278,23 @@ padding-top:12px;
 }
 .footer-nav a {
 padding:0;
+}
+.header-ad {
+flex-direction:column;
+align-items:stretch;
+}
+.header-actions {
+justify-content:center;
+}
+.donate-btn {
+width:100%;
+justify-content:center;
+}
+.donate-modal-body,
+.donate-modal-footer,
+.donate-modal-header {
+padding-left:16px;
+padding-right:16px;
 }
 .cookie-consent-banner {
 width:calc(100% - 20px);

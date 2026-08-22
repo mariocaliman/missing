@@ -95,4 +95,9 @@ $widget_ad = file_get_contents($project_dir . '/ads/widget.txt');
 $smarty->assign('widget_ad',$widget_ad);
 $content_ad = file_get_contents($project_dir . '/ads/content.txt');
 $smarty->assign('content_ad',$content_ad);
+
+$donate_thank_you_url = !empty($general_setting['siteurl']) ? rtrim($general_setting['siteurl'], '/') . '/thank-you-for-donating' : './thank-you-for-donating';
+$donate_paypal_url = 'https://www.paypal.com/donate/?hosted_button_id=R7F6DQKU83LJQ&return=' . urlencode($donate_thank_you_url) . '&cancel_return=' . urlencode(!empty($general_setting['siteurl']) ? rtrim($general_setting['siteurl'], '/') . '/' : './');
+$smarty->assign('donate_thank_you_url', $donate_thank_you_url);
+$smarty->assign('donate_paypal_url', $donate_paypal_url);
 ?>
