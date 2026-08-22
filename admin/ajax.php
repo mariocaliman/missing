@@ -79,6 +79,10 @@ if ($action == "news_grab") {
 	$day = date('j');
 	$month = date('n');
 	$year = date('Y');
+	$import_started_at = time();
+	$inserted_count = 0;
+	$failed_count = 0;
+	log_observability_event('manual_import_start', 'info', 'Manual import started for source #' . $source_id, array('rss_link' => $rss_link), $source_id, 0);
 
 		$feed_items = array();
 		if (class_exists('SimplePie\\SimplePie')) {
@@ -182,8 +186,26 @@ if ($action == "news_grab") {
 					$permalink_safe = $mysqli->real_escape_string($permalink);
 					$filename_safe = $mysqli->real_escape_string($filename);
 					$insert = $mysqli->query("INSERT INTO news (title,permalink,category_id,source_id,details,datetime,published,thumbnail,day,month,year,hits) VALUES ('$title','$permalink_safe','$category_id','$source_id','$details','$datetime','1','$filename_safe','$day','$month','$year','0')");
+					if ($insert) {
+						$inserted_count++;
+					} else {
+						$failed_count++;
+					}
 				}
 			}
 	$now = time();
 	$mysqli->query("UPDATE sources SET latest_activity='$now' WHERE id='$id'");
+	log_observability_event(
+		'manual_import_finished',
+		$failed_count > 0 ? 'warning' : 'info',
+		'Manual import finished for source #' . $source_id,
+		array(
+			'rss_link' => $rss_link,
+			'inserted' => $inserted_count,
+			'failed' => $failed_count,
+			'duration_seconds' => ($now - $import_started_at)
+		),
+		$source_id,
+		$inserted_count
+	);
 }

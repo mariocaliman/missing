@@ -71,6 +71,91 @@
 		});
 	});
 })();
+
+(function () {
+	var measurementId = '{if isset($general_ga4_measurement_id)}{$general_ga4_measurement_id|escape:'javascript'}{/if}';
+	if (!measurementId) {
+		return;
+	}
+
+	var storageKey = 'missingusa_cookie_consent';
+	var gaLoaded = false;
+
+	function hasConsent() {
+		try {
+			return localStorage.getItem(storageKey) === 'accepted';
+		} catch (e) {
+			return false;
+		}
+	}
+
+	function loadAnalytics() {
+		if (gaLoaded) {
+			return;
+		}
+		gaLoaded = true;
+
+		window.dataLayer = window.dataLayer || [];
+		window.gtag = window.gtag || function () { window.dataLayer.push(arguments); };
+		window.gtag('js', new Date());
+		window.gtag('config', measurementId, { anonymize_ip: true });
+
+		var s = document.createElement('script');
+		s.async = true;
+		s.src = 'https://www.googletagmanager.com/gtag/js?id=' + encodeURIComponent(measurementId);
+		document.head.appendChild(s);
+	}
+
+	function track(eventName, params) {
+		if (typeof window.gtag !== 'function') {
+			return;
+		}
+		window.gtag('event', eventName, params || {});
+	}
+
+	if (hasConsent()) {
+		loadAnalytics();
+	}
+
+	var consentBtn = document.getElementById('cookie-consent-accept');
+	if (consentBtn) {
+		consentBtn.addEventListener('click', function () {
+			loadAnalytics();
+		});
+	}
+
+	document.addEventListener('click', function (event) {
+		if (!hasConsent()) {
+			return;
+		}
+
+		var target = event.target;
+		if (!target || typeof target.closest !== 'function') {
+			return;
+		}
+
+		var shareNode = target.closest('.sharethis-share-buttons [data-network]');
+		if (shareNode) {
+			track('share_click', {
+				network: shareNode.getAttribute('data-network') || 'unknown',
+				page_path: window.location.pathname
+			});
+			return;
+		}
+
+		var link = target.closest('a');
+		if (!link) {
+			return;
+		}
+
+		var href = (link.getAttribute('href') || '').toLowerCase();
+		if (href.indexOf('submit-tip') !== -1) {
+			track('submit_tip_click', { page_path: window.location.pathname });
+		} else if (href.indexOf('/contact') !== -1 || href.indexOf('mailto:contact@missing-usa.com') !== -1) {
+			track('contact_click', { page_path: window.location.pathname });
+		}
+	});
+})();
 </script>
 <!-- End Footer -->
 </div>

@@ -375,6 +375,108 @@ function send_transactional_email($to, $subject, $body, $reply_to = '', $context
 	return false;
 }
 
+function ensure_observability_events_table()
+{
+	static $checked = false;
+
+	if ($checked) {
+		return true;
+	}
+
+	global $mysqli;
+	if (!($mysqli instanceof mysqli) || $mysqli->connect_errno) {
+		return false;
+	}
+
+	$sql = "CREATE TABLE IF NOT EXISTS observability_events (
+		id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+		event_type VARCHAR(80) NOT NULL,
+		severity VARCHAR(20) NOT NULL,
+		message VARCHAR(255) NOT NULL,
+		source_id INT UNSIGNED NOT NULL DEFAULT 0,
+		items_count INT NOT NULL DEFAULT 0,
+		context_json MEDIUMTEXT NULL,
+		created_at DATETIME NOT NULL,
+		PRIMARY KEY (id),
+		KEY idx_event_created (event_type, created_at),
+		KEY idx_severity_created (severity, created_at),
+		KEY idx_source_created (source_id, created_at)
+	) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
+
+	$checked = $mysqli->query($sql) ? true : false;
+	return $checked;
+}
+
+function log_observability_event($event_type, $severity, $message, $context = array(), $source_id = 0, $items_count = 0)
+{
+	if (!ensure_observability_events_table()) {
+		return false;
+	}
+
+	global $mysqli;
+	if (!($mysqli instanceof mysqli) || $mysqli->connect_errno) {
+		return false;
+	}
+
+	$event_type = mb_substr(trim((string) $event_type), 0, 80, 'UTF-8');
+	$severity = mb_substr(trim((string) $severity), 0, 20, 'UTF-8');
+	$message = mb_substr(trim((string) $message), 0, 255, 'UTF-8');
+	$source_id = intval($source_id);
+	$items_count = intval($items_count);
+
+	if ($event_type === '' || $severity === '' || $message === '') {
+		return false;
+	}
+
+	$context_json = '';
+	if (is_array($context) && !empty($context)) {
+		$context_json = json_encode($context, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+		if (!is_string($context_json)) {
+			$context_json = '';
+		}
+	}
+
+	$stmt = $mysqli->prepare("INSERT INTO observability_events (event_type, severity, message, source_id, items_count, context_json, created_at) VALUES (?, ?, ?, ?, ?, ?, NOW())");
+	if (!$stmt) {
+		return false;
+	}
+
+	$stmt->bind_param('sssiis', $event_type, $severity, $message, $source_id, $items_count, $context_json);
+	$result = $stmt->execute();
+	$stmt->close();
+	return $result;
+}
+
+function ping_uptimerobot_heartbeat($url)
+{
+	$url = trim((string) $url);
+	if ($url === '' || !filter_var($url, FILTER_VALIDATE_URL)) {
+		return false;
+	}
+
+	if (function_exists('curl_init')) {
+		$ch = curl_init($url);
+		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+		curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+		curl_setopt($ch, CURLOPT_TIMEOUT, 20);
+		curl_setopt($ch, CURLOPT_NOBODY, true);
+		curl_exec($ch);
+		$http_code = intval(curl_getinfo($ch, CURLINFO_HTTP_CODE));
+		curl_close($ch);
+		return ($http_code >= 200 && $http_code < 400);
+	}
+
+	$context = stream_context_create(array(
+		'http' => array(
+			'method' => 'GET',
+			'timeout' => 20,
+			'ignore_errors' => true
+		)
+	));
+	$resp = @file_get_contents($url, false, $context);
+	return $resp !== false;
+}
+
 // function to get the current url
 function curPageURL() 
 {

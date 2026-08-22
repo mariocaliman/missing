@@ -14,6 +14,17 @@
 	<link rel="preconnect" href="https://fonts.googleapis.com">
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 	<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6628485351612554" crossorigin="anonymous"></script>
+	{if isset($general_sentry_browser_dsn) AND !empty($general_sentry_browser_dsn)}
+	<script src="https://browser.sentry-cdn.com/7.120.3/bundle.min.js" crossorigin="anonymous"></script>
+	<script>
+	if (window.Sentry) {
+		Sentry.init({
+			dsn: '{$general_sentry_browser_dsn|escape:'javascript'}',
+			environment: '{if isset($general_sentry_browser_environment) AND !empty($general_sentry_browser_environment)}{$general_sentry_browser_environment|escape:'javascript'}{else}production{/if}'
+		});
+	}
+	</script>
+	{/if}
 	<!-- Facebook Graph Meta -->	
 	{if isset($is_article) AND $is_article eq 1}
 	<meta property="og:site_name" content="{$general_seo_title}"/>

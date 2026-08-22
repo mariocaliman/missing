@@ -334,6 +334,22 @@ $options = $general->get_options('General');
 			<textarea class="form-control" name="seo_description" id="seo_description" rows="3" placeholder="some words about the site .. don't exceed 255 character."><?php echo $options['seo_description']; ?></textarea>
 		  </div>
 		  <div class="form-group">
+			<label for="ga4_measurement_id">GA4 Measurement ID (consent based)</label>
+			<input type="text" class="form-control" name="ga4_measurement_id" id="ga4_measurement_id" placeholder="G-XXXXXXXXXX" value="<?php if (isset($options['ga4_measurement_id'])) { echo $options['ga4_measurement_id']; } ?>" />
+		  </div>
+		  <div class="form-group">
+			<label for="sentry_browser_dsn">Sentry Browser DSN (optional)</label>
+			<input type="text" class="form-control" name="sentry_browser_dsn" id="sentry_browser_dsn" placeholder="https://...@sentry.io/..." value="<?php if (isset($options['sentry_browser_dsn'])) { echo $options['sentry_browser_dsn']; } ?>" />
+		  </div>
+		  <div class="form-group">
+			<label for="sentry_browser_environment">Sentry Environment</label>
+			<input type="text" class="form-control" name="sentry_browser_environment" id="sentry_browser_environment" placeholder="production" value="<?php if (isset($options['sentry_browser_environment']) AND !empty($options['sentry_browser_environment'])) { echo $options['sentry_browser_environment']; } else { echo 'production'; } ?>" />
+		  </div>
+		  <div class="form-group">
+			<label for="uptimerobot_heartbeat_url">UptimeRobot Heartbeat URL (optional)</label>
+			<input type="text" class="form-control" name="uptimerobot_heartbeat_url" id="uptimerobot_heartbeat_url" placeholder="https://heartbeat.uptimerobot.com/..." value="<?php if (isset($options['uptimerobot_heartbeat_url'])) { echo $options['uptimerobot_heartbeat_url']; } ?>" />
+		  </div>
+		  <div class="form-group">
 			<label for="twitter_site">Twitter Site (optional)</label>
 			<input type="text" class="form-control" name="twitter_site" id="twitter_site" placeholder="@missingusa" value="<?php if (isset($options['twitter_site'])) { echo $options['twitter_site']; } ?>" />
 		  </div>
