@@ -60,7 +60,17 @@ function rss_manual_permalink_slug($title) {
 if (!function_exists('rss_is_editorial_category_name')) {
 function rss_is_editorial_category_name($category_name) {
 	$name = strtolower(trim((string) $category_name));
-	$editorial = array('explained', 'case & stories', 'case & sotories', 'cases & stories', 'cases & sotories');
+	$editorial = array(
+		'explained',
+		'case & stories',
+		'case & sotories',
+		'cases & stories',
+		'cases & sotories',
+		'famous missing persons cases',
+		'famous missing person cases',
+		'famous missing persons',
+		'famous missing person'
+	);
 	return in_array($name,$editorial);
 }
 }

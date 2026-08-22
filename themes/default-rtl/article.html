@@ -3,10 +3,90 @@
 <div class="content">
 <div class="row article-full-mobile">
 <div class="col-md-8 article-main-col">
+{if isset($is_explained_category) AND $is_explained_category eq 1}
+<div class="article-page explained-article-page">
+<div class="explained-hero">
+<span class="explained-kicker">{if !empty($article_category_display_name)}{$article_category_display_name|html_decode}{elseif !empty($article_category_name)}{$article_category_name|html_decode}{else}Explained{/if}</span>
+<h1>{$article_title|html_decode}</h1>
+<div class="explained-meta">
+<span><i class="fa fa-clock-o"></i>{$article_datetime|get_since}</span>
+<span><i class="fa fa-folder-open"></i><a href="./category/{$article_category_id}/{$article_category_id|get_category|html_decode|slug}">{$article_category_id|get_category}</a></span>
+<span><i class="fa fa-rss"></i><a href="./source/{$article_source_id}/{$article_source_id|get_source|html_decode|slug}">{$article_source_id|get_source}</a></span>
+<span><i class="fa fa-eye"></i>{$article_hits} views</span>
+</div>
+</div>
+<div class="explained-reading-wrap">
+{if !empty($article_thumbnail)}
+<figure class="explained-cover">
+{if $theme_allow_lazyload eq 1}
+<img data-src="{if !empty($article_thumbnail_src)}{$article_thumbnail_src}{else}./upload/news/{$article_thumbnail}{/if}" class="img-responsive max-width" alt="{$article_title|html_decode}" width="{if isset($thumbnail_width) AND $thumbnail_width gt 0}{$thumbnail_width}{else}1200{/if}" height="{if isset($thumbnail_height) AND $thumbnail_height gt 0}{$thumbnail_height}{else}675{/if}" />
+{else}
+<img src="{if !empty($article_thumbnail_src)}{$article_thumbnail_src}{else}./upload/news/{$article_thumbnail}{/if}" class="img-responsive max-width" alt="{$article_title|html_decode}" width="{if isset($thumbnail_width) AND $thumbnail_width gt 0}{$thumbnail_width}{else}1200{/if}" height="{if isset($thumbnail_height) AND $thumbnail_height gt 0}{$thumbnail_height}{else}675{/if}" />
+{/if}
+</figure>
+{/if}
+<article class="article-content explained-reading-content">
+{if $article_source_id eq 0}
+{$article_details|html_decode|nl2br}
+{else}
+{$article_details|html_decode|strip_tags|nl2br}
+{/if}
+</article>
+{if !empty($article_middle_image)}
+<figure class="explained-inline-media" id="explained-inline-media">
+<img src="./upload/news/middle/{$article_middle_image}" class="img-responsive max-width" alt="{$article_title|html_decode} supporting image" width="{if isset($middle_image_width) AND $middle_image_width gt 0}{$middle_image_width}{else}1200{/if}" height="{if isset($middle_image_height) AND $middle_image_height gt 0}{$middle_image_height}{else}675{/if}" loading="lazy" decoding="async" />
+</figure>
+<script type="text/javascript">
+(function(){
+    function placeInlineMedia() {
+        var content = document.querySelector('.explained-reading-content');
+        var media = document.getElementById('explained-inline-media');
+        if (!content || !media) {
+            return;
+        }
+        var paragraphs = content.querySelectorAll('p');
+        if (paragraphs.length > 1) {
+            var midIndex = Math.floor(paragraphs.length / 2) - 1;
+            if (midIndex < 0) {
+                midIndex = 0;
+            }
+            paragraphs[midIndex].insertAdjacentElement('afterend', media);
+        } else {
+            content.appendChild(media);
+        }
+    }
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', placeInlineMedia);
+    } else {
+        placeInlineMedia();
+    }
+})();
+</script>
+{/if}
+<div class="article-share explained-share">
+<!-- ShareThis BEGINS -->
+<div class="sharethis-share-buttons" data-type="inline-share-buttons" data-labels="counts" data-show_total="false">
+<span data-network="facebook"></span>
+<span data-network="twitter"></span>
+<span data-network="sms"></span>
+<span data-network="pinterest"></span>
+<span data-network="whatsapp"></span>
+<span data-network="email"></span>
+<span data-network="sharethis"></span>
+</div>
+<!-- ShareThis ENDS -->
+</div>
+<!-- Start Content Advertisement -->
+{if !empty($content_ad)}
+{$content_ad}
+{/if}
+</div>
+</div>
+{else}
 <div class="article-page case-poster-page">
 <div class="case-poster-head">
 <span class="case-label">Missing Child Alert</span>
-<h1><a href="./news/{$article_id}/{$article_title|html_decode|slug}">{$article_title|html_decode}</a></h1>
+<h1>{$article_title|html_decode}</h1>
 <p class="case-subtitle">Please review this case carefully and share verified information. Even one detail can make a difference.</p>
 <div class="case-action-buttons">
 <a class="btn btn-danger" href="./submit-tip.php?news_id={$article_id}&missingName={$article_title|html_decode|escape:'url'}&img={if !empty($article_thumbnail_src)}{$article_thumbnail_src|escape:'url'}{else}{$article_thumbnail|escape:'url'}{/if}&posterUrl={$article_url|escape:'url'}">Submit a Tip</a>
@@ -92,6 +172,7 @@
 </div>
 </div>
 </div>
+{/if}
 {if $related neq 0}
 <!-- Related News -->
 <div class="related-news">
@@ -125,7 +206,7 @@
     var disqus_shortname = '{/literal}{$general_disqus_shortname}{literal}';
     var disqus_identifier = '{/literal}{$article_id}{literal}';
     var disqus_title = '{/literal}{$article_title}{literal}';
-    var disqus_url = '{/literal}{$general_siteurl}/news/{$article_id}/{$article_title|html_decode|slug}{literal}';
+    var disqus_url = '{/literal}{$article_url}{literal}';
 	
     /* * * DON'T EDIT BELOW THIS LINE * * */
     (function() {
