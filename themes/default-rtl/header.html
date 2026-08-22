@@ -17,7 +17,7 @@
 	<script async src="https://www.googletagmanager.com/gtag/js?id=G-WBVPR83KKR"></script>
 	<script>
 	window.dataLayer = window.dataLayer || [];
-	var gtag = window.dataLayer.push.bind(window.dataLayer);
+	window.gtag = window.gtag || ((...args) => window.dataLayer.push(args));
 	gtag('js', new Date());
 	gtag('config', 'G-WBVPR83KKR');
 	</script>
