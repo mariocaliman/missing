@@ -74,14 +74,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $mail_body .= "User-Agent: " . $user_agent . "\n";
         $mail_body .= "Date: " . date('Y-m-d H:i:s') . "\n";
 
-        $mail_headers = array(
-            'MIME-Version: 1.0',
-            'Content-Type: text/plain; charset=UTF-8',
-            'From: Missing USA <no-reply@missing-usa.com>',
-            'Reply-To: ' . $safe_name . ' <' . $safe_email . '>'
+        $sent = send_transactional_email(
+            $mail_to,
+            $mail_subject,
+            $mail_body,
+            $safe_name . ' <' . $safe_email . '>',
+            'contact_form'
         );
-
-        $sent = @mail($mail_to, $mail_subject, $mail_body, implode("\r\n", $mail_headers));
         if ($sent) {
             $form_message_type = 'success';
             $form_message = 'Thank you. Your message has been sent.';

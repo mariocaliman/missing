@@ -55,14 +55,13 @@ if ($case === 'view') {
                         $mail_body .= "Admin Reply:\n" . $admin_reply . "\n\n";
                         $mail_body .= "Thank you,\nMissing USA Support Team\n";
 
-                        $mail_headers = array(
-                            'MIME-Version: 1.0',
-                            'Content-Type: text/plain; charset=UTF-8',
-                            'From: Missing USA Support <no-reply@missing-usa.com>',
-                            'Reply-To: contact@missing-usa.com'
+                        $email_sent = send_transactional_email(
+                            $mail_to,
+                            $mail_subject,
+                            $mail_body,
+                            'contact@missing-usa.com',
+                            'support_ticket_reply'
                         );
-
-                        $email_sent = @mail($mail_to, $mail_subject, $mail_body, implode("\r\n", $mail_headers));
                         if (!$email_sent) {
                             $message = notification('danger', 'Could not send email reply. Save still completed without email delivery.');
                         }

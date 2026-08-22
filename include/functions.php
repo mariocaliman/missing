@@ -56,6 +56,325 @@ function verify_google_recaptcha($secret_key, $response_token, $remote_ip = '')
 	return is_array($data) && !empty($data['success']);
 }
 
+function get_email_delivery_options()
+{
+	static $options = null;
+	if ($options !== null) {
+		return $options;
+	}
+
+	$options = array(
+		'smtp_host' => '',
+		'smtp_port' => '587',
+		'smtp_secure' => 'tls',
+		'smtp_username' => '',
+		'smtp_password' => '',
+		'smtp_from_email' => 'no-reply@missing-usa.com',
+		'smtp_from_name' => 'Missing USA',
+		'smtp_retry_attempts' => '3'
+	);
+
+	global $mysqli;
+	if (!($mysqli instanceof mysqli) || $mysqli->connect_errno) {
+		return $options;
+	}
+
+	$keys = array_keys($options);
+	$escaped = array();
+	foreach ($keys as $key) {
+		$escaped[] = "'" . $mysqli->real_escape_string($key) . "'";
+	}
+
+	$sql = "SELECT option_name, option_value FROM options WHERE option_name IN (" . implode(',', $escaped) . ")";
+	$query = $mysqli->query($sql);
+	if ($query) {
+		while ($row = $query->fetch_assoc()) {
+			$options[$row['option_name']] = (string) $row['option_value'];
+		}
+	}
+
+	if (!in_array($options['smtp_secure'], array('none', 'tls', 'ssl'), true)) {
+		$options['smtp_secure'] = 'tls';
+	}
+
+	return $options;
+}
+
+function ensure_email_logs_table()
+{
+	static $checked = false;
+	if ($checked) {
+		return true;
+	}
+
+	global $mysqli;
+	if (!($mysqli instanceof mysqli) || $mysqli->connect_errno) {
+		return false;
+	}
+
+	$sql = "CREATE TABLE IF NOT EXISTS email_delivery_logs (
+		id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+		context_name VARCHAR(120) NOT NULL,
+		recipient_email VARCHAR(255) NOT NULL,
+		subject_line VARCHAR(255) NOT NULL,
+		transport VARCHAR(20) NOT NULL,
+		attempt SMALLINT UNSIGNED NOT NULL,
+		status VARCHAR(20) NOT NULL,
+		response_message TEXT NULL,
+		created_at DATETIME NOT NULL,
+		PRIMARY KEY (id),
+		KEY idx_context_created (context_name, created_at),
+		KEY idx_status_created (status, created_at)
+	) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
+
+	$checked = $mysqli->query($sql) ? true : false;
+	return $checked;
+}
+
+function log_email_delivery_attempt($context, $to, $subject, $transport, $attempt, $status, $response)
+{
+	if (!ensure_email_logs_table()) {
+		return;
+	}
+
+	global $mysqli;
+	if (!($mysqli instanceof mysqli) || $mysqli->connect_errno) {
+		return;
+	}
+
+	$stmt = $mysqli->prepare("INSERT INTO email_delivery_logs (context_name, recipient_email, subject_line, transport, attempt, status, response_message, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, NOW())");
+	if (!$stmt) {
+		return;
+	}
+
+	$context = mb_substr((string) $context, 0, 120, 'UTF-8');
+	$to = mb_substr((string) $to, 0, 255, 'UTF-8');
+	$subject = mb_substr((string) $subject, 0, 255, 'UTF-8');
+	$transport = mb_substr((string) $transport, 0, 20, 'UTF-8');
+	$status = mb_substr((string) $status, 0, 20, 'UTF-8');
+	$response = (string) $response;
+
+	$stmt->bind_param('ssssiss', $context, $to, $subject, $transport, $attempt, $status, $response);
+	$stmt->execute();
+	$stmt->close();
+}
+
+function smtp_read_response($socket)
+{
+	$response = '';
+	while (!feof($socket)) {
+		$line = fgets($socket, 515);
+		if ($line === false) {
+			break;
+		}
+		$response .= $line;
+		if (strlen($line) < 4 || $line[3] === ' ') {
+			break;
+		}
+	}
+	return trim($response);
+}
+
+function smtp_send_command($socket, $command, $expected_codes, &$response)
+{
+	if ($command !== null) {
+		fwrite($socket, $command . "\r\n");
+	}
+	$response = smtp_read_response($socket);
+	foreach ((array) $expected_codes as $code) {
+		if (strpos($response, (string) $code) === 0) {
+			return true;
+		}
+	}
+	return false;
+}
+
+function smtp_send_email_message($config, $to, $subject, $body, $reply_to, &$error)
+{
+	$host = trim((string) $config['smtp_host']);
+	$port = (int) $config['smtp_port'];
+	if ($port <= 0) {
+		$port = 587;
+	}
+	$secure = trim((string) $config['smtp_secure']);
+	$username = trim((string) $config['smtp_username']);
+	$password = (string) $config['smtp_password'];
+	$from_email = trim((string) $config['smtp_from_email']);
+	$from_name = trim((string) $config['smtp_from_name']);
+
+	if ($host === '' || $username === '' || $password === '' || $from_email === '' || $to === '') {
+		$error = 'Missing SMTP configuration values.';
+		return false;
+	}
+
+	$remote = ($secure === 'ssl' ? 'ssl://' : '') . $host . ':' . $port;
+	$socket = @stream_socket_client($remote, $errno, $errstr, 20, STREAM_CLIENT_CONNECT);
+	if (!$socket) {
+		$error = 'SMTP connect failed: ' . $errstr;
+		return false;
+	}
+
+	stream_set_timeout($socket, 20);
+	$response = '';
+	if (!smtp_send_command($socket, null, array('220'), $response)) {
+		$error = 'SMTP greeting failed: ' . $response;
+		fclose($socket);
+		return false;
+	}
+
+	$ehlo_host = !empty($_SERVER['SERVER_NAME']) ? $_SERVER['SERVER_NAME'] : 'localhost';
+	if (!smtp_send_command($socket, 'EHLO ' . $ehlo_host, array('250'), $response)) {
+		$error = 'SMTP EHLO failed: ' . $response;
+		fclose($socket);
+		return false;
+	}
+
+	if ($secure === 'tls') {
+		if (!smtp_send_command($socket, 'STARTTLS', array('220'), $response)) {
+			$error = 'SMTP STARTTLS failed: ' . $response;
+			fclose($socket);
+			return false;
+		}
+
+		$crypto_ok = @stream_socket_enable_crypto($socket, true, STREAM_CRYPTO_METHOD_TLS_CLIENT);
+		if ($crypto_ok !== true) {
+			$error = 'SMTP TLS negotiation failed.';
+			fclose($socket);
+			return false;
+		}
+
+		if (!smtp_send_command($socket, 'EHLO ' . $ehlo_host, array('250'), $response)) {
+			$error = 'SMTP EHLO after TLS failed: ' . $response;
+			fclose($socket);
+			return false;
+		}
+	}
+
+	if (!smtp_send_command($socket, 'AUTH LOGIN', array('334'), $response)) {
+		$error = 'SMTP AUTH command failed: ' . $response;
+		fclose($socket);
+		return false;
+	}
+	if (!smtp_send_command($socket, base64_encode($username), array('334'), $response)) {
+		$error = 'SMTP username rejected: ' . $response;
+		fclose($socket);
+		return false;
+	}
+	if (!smtp_send_command($socket, base64_encode($password), array('235'), $response)) {
+		$error = 'SMTP password rejected: ' . $response;
+		fclose($socket);
+		return false;
+	}
+
+	if (!smtp_send_command($socket, 'MAIL FROM:<' . $from_email . '>', array('250'), $response)) {
+		$error = 'SMTP MAIL FROM failed: ' . $response;
+		fclose($socket);
+		return false;
+	}
+	if (!smtp_send_command($socket, 'RCPT TO:<' . $to . '>', array('250', '251'), $response)) {
+		$error = 'SMTP RCPT TO failed: ' . $response;
+		fclose($socket);
+		return false;
+	}
+	if (!smtp_send_command($socket, 'DATA', array('354'), $response)) {
+		$error = 'SMTP DATA failed: ' . $response;
+		fclose($socket);
+		return false;
+	}
+
+	$encoded_subject = '=?UTF-8?B?' . base64_encode((string) $subject) . '?=';
+	$from_header = $from_email;
+	if ($from_name !== '') {
+		$from_header = '=?UTF-8?B?' . base64_encode($from_name) . '?= <' . $from_email . '>';
+	}
+
+	$headers = array(
+		'Date: ' . date('r'),
+		'From: ' . $from_header,
+		'To: <' . $to . '>',
+		'Subject: ' . $encoded_subject,
+		'MIME-Version: 1.0',
+		'Content-Type: text/plain; charset=UTF-8',
+		'Content-Transfer-Encoding: 8bit'
+	);
+	if ($reply_to !== '') {
+		$headers[] = 'Reply-To: ' . $reply_to;
+	}
+
+	$body = preg_replace("/\r\n|\r|\n/", "\r\n", (string) $body);
+	$body = preg_replace('/^\./m', '..', $body);
+	$data = implode("\r\n", $headers) . "\r\n\r\n" . $body . "\r\n.\r\n";
+	fwrite($socket, $data);
+
+	if (!smtp_send_command($socket, null, array('250'), $response)) {
+		$error = 'SMTP message rejected: ' . $response;
+		fclose($socket);
+		return false;
+	}
+
+	smtp_send_command($socket, 'QUIT', array('221', '250'), $response);
+	fclose($socket);
+	$error = '';
+	return true;
+}
+
+function send_transactional_email($to, $subject, $body, $reply_to = '', $context = 'general')
+{
+	$to = trim((string) $to);
+	$subject = trim((string) $subject);
+	$body = (string) $body;
+	$reply_to = trim((string) $reply_to);
+	$context = trim((string) $context);
+
+	if ($to === '' || $subject === '' || $body === '') {
+		return false;
+	}
+
+	$options = get_email_delivery_options();
+	$attempts = (int) $options['smtp_retry_attempts'];
+	if ($attempts < 1) {
+		$attempts = 1;
+	}
+	if ($attempts > 5) {
+		$attempts = 5;
+	}
+
+	$use_smtp = !empty($options['smtp_host']) && !empty($options['smtp_username']) && !empty($options['smtp_password']) && !empty($options['smtp_from_email']);
+	$transport = $use_smtp ? 'smtp' : 'mail';
+	$last_error = '';
+
+	for ($attempt = 1; $attempt <= $attempts; $attempt++) {
+		$success = false;
+		if ($use_smtp) {
+			$success = smtp_send_email_message($options, $to, $subject, $body, $reply_to, $last_error);
+		} else {
+			$from_email = !empty($options['smtp_from_email']) ? $options['smtp_from_email'] : 'no-reply@missing-usa.com';
+			$from_name = !empty($options['smtp_from_name']) ? $options['smtp_from_name'] : 'Missing USA';
+			$mail_headers = array(
+				'MIME-Version: 1.0',
+				'Content-Type: text/plain; charset=UTF-8',
+				'From: ' . $from_name . ' <' . $from_email . '>'
+			);
+			if ($reply_to !== '') {
+				$mail_headers[] = 'Reply-To: ' . $reply_to;
+			}
+			$success = @mail($to, $subject, $body, implode("\r\n", $mail_headers));
+			$last_error = $success ? '' : 'mail() returned false';
+		}
+
+		log_email_delivery_attempt($context, $to, $subject, $transport, $attempt, $success ? 'success' : 'failed', $last_error);
+		if ($success) {
+			return true;
+		}
+
+		if ($attempt < $attempts) {
+			usleep(250000);
+		}
+	}
+
+	return false;
+}
+
 // function to get the current url
 function curPageURL() 
 {

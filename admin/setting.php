@@ -46,6 +46,54 @@ $options = $general->get_options('AI');
 			</div>
 		  </div>
 		  <div class="panel panel-default">
+			<div class="panel-heading"><strong>Email Delivery (SMTP/API)</strong></div>
+			<div class="panel-body">
+			  <div class="row">
+				<div class="col-md-8 form-group">
+				  <label for="smtp_host">SMTP Host</label>
+				  <input type="text" class="form-control" name="smtp_host" id="smtp_host" value="<?php if (isset($options['smtp_host'])) {echo htmlspecialchars_decode($options['smtp_host'],ENT_QUOTES);} ?>" placeholder="smtp.postmarkapp.com" />
+				</div>
+				<div class="col-md-4 form-group">
+				  <label for="smtp_port">SMTP Port</label>
+				  <input type="number" class="form-control" name="smtp_port" id="smtp_port" value="<?php if (isset($options['smtp_port']) AND !empty($options['smtp_port'])) {echo htmlspecialchars_decode($options['smtp_port'],ENT_QUOTES);} else {echo '587';} ?>" />
+				</div>
+			  </div>
+			  <div class="row">
+				<div class="col-md-4 form-group">
+				  <label for="smtp_secure">Encryption</label>
+				  <select class="form-control" name="smtp_secure" id="smtp_secure">
+					<option value="tls" <?php if (!isset($options['smtp_secure']) OR $options['smtp_secure'] == 'tls') {echo 'selected';} ?>>TLS (STARTTLS)</option>
+					<option value="ssl" <?php if (isset($options['smtp_secure']) AND $options['smtp_secure'] == 'ssl') {echo 'selected';} ?>>SSL</option>
+					<option value="none" <?php if (isset($options['smtp_secure']) AND $options['smtp_secure'] == 'none') {echo 'selected';} ?>>None</option>
+				  </select>
+				</div>
+				<div class="col-md-4 form-group">
+				  <label for="smtp_retry_attempts">Retry Attempts</label>
+				  <input type="number" min="1" max="5" class="form-control" name="smtp_retry_attempts" id="smtp_retry_attempts" value="<?php if (isset($options['smtp_retry_attempts']) AND !empty($options['smtp_retry_attempts'])) {echo htmlspecialchars_decode($options['smtp_retry_attempts'],ENT_QUOTES);} else {echo '3';} ?>" />
+				</div>
+			  </div>
+			  <div class="form-group">
+				<label for="smtp_username">SMTP Username</label>
+				<input type="text" class="form-control" name="smtp_username" id="smtp_username" value="<?php if (isset($options['smtp_username'])) {echo htmlspecialchars_decode($options['smtp_username'],ENT_QUOTES);} ?>" autocomplete="off" />
+			  </div>
+			  <div class="form-group">
+				<label for="smtp_password">SMTP Password / API Token</label>
+				<input type="password" class="form-control" name="smtp_password" id="smtp_password" value="<?php if (isset($options['smtp_password'])) {echo htmlspecialchars_decode($options['smtp_password'],ENT_QUOTES);} ?>" autocomplete="off" />
+			  </div>
+			  <div class="row">
+				<div class="col-md-6 form-group">
+				  <label for="smtp_from_email">From Email</label>
+				  <input type="email" class="form-control" name="smtp_from_email" id="smtp_from_email" value="<?php if (isset($options['smtp_from_email']) AND !empty($options['smtp_from_email'])) {echo htmlspecialchars_decode($options['smtp_from_email'],ENT_QUOTES);} else {echo 'no-reply@missing-usa.com';} ?>" />
+				</div>
+				<div class="col-md-6 form-group">
+				  <label for="smtp_from_name">From Name</label>
+				  <input type="text" class="form-control" name="smtp_from_name" id="smtp_from_name" value="<?php if (isset($options['smtp_from_name']) AND !empty($options['smtp_from_name'])) {echo htmlspecialchars_decode($options['smtp_from_name'],ENT_QUOTES);} else {echo 'Missing USA';} ?>" />
+				</div>
+			  </div>
+			  <p class="help-block">Supports providers like Postmark, Mailgun, SES (SMTP endpoint), and standard SMTP servers.</p>
+			</div>
+		  </div>
+		  <div class="panel panel-default">
 			<div class="panel-heading"><strong>OpenAI</strong></div>
 			<div class="panel-body">
 		  <div class="form-group">
