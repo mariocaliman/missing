@@ -125,7 +125,7 @@
 		<li class="{if isset($is_category) AND $is_category eq 1 AND $category_id eq $categories[x].id}active{/if}"><a href="./category/{$categories[x].id}/{$categories[x].category|html_decode|slug}">Famous Missing Persons Cases</a></li>
 		{/if}
 		{/section}
-		<li class="{if isset($is_states_map) AND $is_states_map eq 1}active{/if}"><a href="./us-map">USCASEMAPS</a></li>
+		<li class="{if isset($is_states_map) AND $is_states_map eq 1}active{/if}"><a href="./us-map">US Case Maps</a></li>
 		<li class="{if isset($is_contact) AND $is_contact eq 1}active{/if}"><a href="./contact">Contact</a></li>
 		{if isset($general_display_rss_link) AND $general_display_rss_link eq 1}
 		<li><a href="./rss.xml" target="_NEW"><i class="fa fa-rss"></i> RSS</a></li>
