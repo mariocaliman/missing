@@ -7,6 +7,10 @@ php_value max_input_time 120
 </IfModule>
 
 RewriteEngine on
+
+# Redirect legacy news URLs like /news/some-slug?uid=12345 to site root
+RewriteRule ^news/[^/]+/?$ https://missing-usa.com/ [R=301,L,NC]
+
 RewriteRule ^missing-persons/([a-z0-9-]+)/?$ category.php?state=$1 [L,QSA,NC]
 RewriteRule ^category/(.*)/(.*)$ category.php?id=$1&slug=$2
 RewriteRule ^source/(.*)/(.*)$ source.php?id=$1&slug=$2
