@@ -13,6 +13,14 @@
 	<meta name="keywords" content="{$seo_keywords}">
 	{if isset($canonical_url) AND !empty($canonical_url)}<link rel="canonical" href="{$canonical_url}" />{/if}
 	<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6628485351612554" crossorigin="anonymous"></script>
+	<!-- Google tag (gtag.js) -->
+	<script async src="https://www.googletagmanager.com/gtag/js?id=G-WBVPR83KKR"></script>
+	<script>
+	window.dataLayer = window.dataLayer || [];
+	function gtag(){dataLayer.push(arguments);}
+	gtag('js', new Date());
+	gtag('config', 'G-WBVPR83KKR');
+	</script>
 	{if isset($general_sentry_browser_dsn) AND !empty($general_sentry_browser_dsn)}
 	<script src="https://browser.sentry-cdn.com/7.120.3/bundle.min.js" crossorigin="anonymous"></script>
 	<script>
