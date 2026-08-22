@@ -150,6 +150,13 @@ class Pagination
 			return null;
 		}
 
+		if ($currentPage < 1) {
+			$currentPage = 1;
+		}
+		if ($currentPage > $totalPages) {
+			$currentPage = $totalPages;
+		}
+
 		$output = null;
 			
 		$loopStart = 1; 
@@ -175,31 +182,31 @@ class Pagination
 		}
 
 		if ($loopStart != 1){
-			$output .= sprintf('<li class="active_page"><a href="' . $link . '"> &#171; </a></li>', '1');
+			$output .= sprintf('<li class="page-jump"><a class="page-link" href="' . $link . '" aria-label="First page">&#171;</a></li>', '1');
 		}
 		
 		if ($currentPage > 1){
-			$output .= sprintf('<li class="previous"><a href="' . $link . '"> Previous </a></li>', $currentPage - 1);
+			$output .= sprintf('<li class="page-nav page-prev"><a class="page-link" href="' . $link . '" rel="prev">Previous</a></li>', $currentPage - 1);
 		}
 		
 		for ($i = $loopStart; $i <= $loopEnd; $i++)
 		{
 			if ($i == $currentPage){
-				$output .= '<li class="active"><a href="'.$_SERVER['REQUEST_URI'].'">' . $i . '</a></li> ';
+				$output .= '<li class="active current"><span class="page-link" aria-current="page">' . $i . '</span></li> ';
 			} else {
-				$output .= sprintf('<li><a href="' . $link . '">', $i) . $i . '</a></li> ';
+				$output .= sprintf('<li><a class="page-link" href="' . $link . '">', $i) . $i . '</a></li> ';
 			}
 		}
 
 		if ($currentPage < $totalPages){
-			$output .= sprintf('<li class="next"><a href="' . $link . '"> Next </a></li>', $currentPage + 1);
+			$output .= sprintf('<li class="page-nav page-next"><a class="page-link" href="' . $link . '" rel="next">Next</a></li>', $currentPage + 1);
 		}
 		
 		if ($loopEnd != $totalPages){
-			$output .= sprintf('<li class="next"><a href="' . $link . '"> &#187; </a></li>', $totalPages);
+			$output .= sprintf('<li class="page-jump"><a class="page-link" href="' . $link . '" aria-label="Last page">&#187;</a></li>', $totalPages);
 		}
 
-		return '<div class="pagi"><ul class="pagination fr">' . $output . '</ul></div>';
+		return '<nav class="pagi modern-pagination-wrap" aria-label="Pagination"><ul class="pagination modern-pagination">' . $output . '</ul></nav>';
 	}
 }
 
