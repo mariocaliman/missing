@@ -214,6 +214,21 @@ function rss_store_middle_image($file, $article_id, $max_bytes, &$error_message 
 }
 }
 
+if (!function_exists('rss_pick_middle_image_upload')) {
+function rss_pick_middle_image_upload($files) {
+	if (!is_array($files)) {
+		return array('name' => '');
+	}
+	if (isset($files['middle_image_static']) && !empty($files['middle_image_static']['name'])) {
+		return $files['middle_image_static'];
+	}
+	if (isset($files['middle_image']) && !empty($files['middle_image']['name'])) {
+		return $files['middle_image'];
+	}
+	return array('name' => '');
+}
+}
+
 if (!function_exists('rss_generate_article_with_ai')) {
 function rss_generate_article_with_ai($topic, $word_count, $language, $required_terms_links, &$error_message = '') {
 	global $ai_config;
@@ -764,13 +779,14 @@ $query = $mysqli->query($sql);
 if ($query) {
 $article_id = intval($mysqli->insert_id);
 $middle_image_error = '';
-if ($is_editorial_category && !empty($_FILES['middle_image']['name'])) {
-	rss_store_middle_image($_FILES['middle_image'],$article_id,$max_article_image_bytes,$middle_image_error);
+$middle_upload = rss_pick_middle_image_upload($_FILES);
+if ($is_editorial_category && !empty($middle_upload['name'])) {
+	rss_store_middle_image($middle_upload,$article_id,$max_article_image_bytes,$middle_image_error);
 }
-if ($is_editorial_category && empty($_FILES['middle_image']['name']) && $generated_middle_bytes !== '') {
+if ($is_editorial_category && empty($middle_upload['name']) && $generated_middle_bytes !== '') {
 	rss_save_generated_news_image($generated_middle_bytes, 'ai-middle', $middle_image_error, $article_id, true);
 }
-if (!$is_editorial_category && !empty($_FILES['middle_image']['name'])) {
+if (!$is_editorial_category && !empty($middle_upload['name'])) {
 	$middle_image_error = 'Middle image was ignored because this category is not Explained/Cases & Stories/Famous Missing Persons Cases.';
 }
 	$warnings = array();
@@ -890,7 +906,16 @@ $news_token = NoCSRF::generate('news_token');
 			  <span class="input-group-addon btn btn-default btn-file"><span class="fileinput-new">Select file</span><span class="fileinput-exists">Change</span><input type="file" name="middle_image"></span>
 			  <a href="#" class="input-group-addon btn btn-default fileinput-exists" data-dismiss="fileinput">Remove</a>
 			</div>
-			<p class="help-block">This image is inserted in the middle of the article body on editorial categories.</p>
+			<p class="help-block">This upload remains available as an optional fallback.</p>
+		  </div>
+		  <div class="form-group" id="middle-image-static-group">
+			<label for="middle_image_static">Middle Image (Static Upload when AI image generation is OFF)</label>
+			<div class="fileinput fileinput-new input-group" data-provides="fileinput">
+			  <div class="form-control" data-trigger="fileinput"><i class="glyphicon glyphicon-file fileinput-exists"></i> <span class="fileinput-filename"></span></div>
+			  <span class="input-group-addon btn btn-default btn-file"><span class="fileinput-new">Select file</span><span class="fileinput-exists">Change</span><input type="file" name="middle_image_static"></span>
+			  <a href="#" class="input-group-addon btn btn-default fileinput-exists" data-dismiss="fileinput">Remove</a>
+			</div>
+			<p class="help-block">Use this field to upload a fixed middle image when you do not want AI-generated images.</p>
 		  </div>
 		  <div class="form-group">
 			<label for="details">Details</label>
@@ -906,11 +931,13 @@ $news_token = NoCSRF::generate('news_token');
 (function(){
 	function isEditorialCategory(label) {
 		var t = (label || '').toLowerCase();
-		return t.indexOf('explained') !== -1 || t.indexOf('case & stories') !== -1 || t.indexOf('cases & stories') !== -1 || t.indexOf('case & sotories') !== -1 || t.indexOf('cases & sotories') !== -1;
+		return t.indexOf('explained') !== -1 || t.indexOf('case & stories') !== -1 || t.indexOf('cases & stories') !== -1 || t.indexOf('case & sotories') !== -1 || t.indexOf('cases & sotories') !== -1 || t.indexOf('famous missing person') !== -1;
 	}
 	function toggleMiddleImageField() {
 		var select = document.getElementById('category_id');
 		var group = document.getElementById('middle-image-group');
+		var staticGroup = document.getElementById('middle-image-static-group');
+		var aiCheckbox = document.getElementById('ai_generate_images');
 		if (!select || !group) {
 			return;
 		}
@@ -918,7 +945,12 @@ $news_token = NoCSRF::generate('news_token');
 		if (select.options && select.selectedIndex >= 0) {
 			text = select.options[select.selectedIndex].text || '';
 		}
-		group.style.display = isEditorialCategory(text) ? 'block' : 'none';
+		var isEditorial = isEditorialCategory(text);
+		group.style.display = isEditorial ? 'block' : 'none';
+		if (staticGroup) {
+			var aiEnabled = aiCheckbox ? aiCheckbox.checked : false;
+			staticGroup.style.display = (isEditorial && !aiEnabled) ? 'block' : 'none';
+		}
 	}
 	function getSuggestedImageSubject() {
 		var aiTopic = document.getElementById('ai_topic');
@@ -941,8 +973,12 @@ $news_token = NoCSRF::generate('news_token');
 		var suggestButton = document.getElementById('suggest-image-subject');
 		var titleField = document.getElementById('title');
 		var aiTopicField = document.getElementById('ai_topic');
+		var aiGenerateImagesField = document.getElementById('ai_generate_images');
 		if (select) {
 			select.addEventListener('change', toggleMiddleImageField);
+		}
+		if (aiGenerateImagesField) {
+			aiGenerateImagesField.addEventListener('change', toggleMiddleImageField);
 		}
 		if (suggestButton && imageSubject) {
 			suggestButton.addEventListener('click', function(){
@@ -1027,12 +1063,13 @@ $query = $mysqli->query($sql);
 if ($query) {
 $is_editorial_category = rss_is_editorial_category($category_id,$general);
 $middle_image_error = '';
-if ($is_editorial_category && !empty($_FILES['middle_image']['name'])) {
-	rss_store_middle_image($_FILES['middle_image'],$id,$max_article_image_bytes,$middle_image_error);
+$middle_upload = rss_pick_middle_image_upload($_FILES);
+if ($is_editorial_category && !empty($middle_upload['name'])) {
+	rss_store_middle_image($middle_upload,$id,$max_article_image_bytes,$middle_image_error);
 }
 if (!$is_editorial_category) {
 	rss_delete_middle_image($id);
-	if (!empty($_FILES['middle_image']['name'])) {
+	if (!empty($middle_upload['name'])) {
 		$middle_image_error = 'Middle image was ignored because this category is not Explained/Cases & Stories/Famous Missing Persons Cases.';
 	}
 }
@@ -1098,10 +1135,16 @@ $middle_image = rss_find_middle_image($id);
 			  <span class="input-group-addon btn btn-default btn-file"><span class="fileinput-new">Select file</span><span class="fileinput-exists">Change</span><input type="file" name="middle_image"></span>
 			  <a href="#" class="input-group-addon btn btn-default fileinput-exists" data-dismiss="fileinput">Remove</a>
 			</div>
+			<div style="height:8px;"></div>
+			<div class="fileinput fileinput-new input-group" data-provides="fileinput">
+			  <div class="form-control" data-trigger="fileinput"><i class="glyphicon glyphicon-file fileinput-exists"></i> <span class="fileinput-filename"></span></div>
+			  <span class="input-group-addon btn btn-default btn-file"><span class="fileinput-new">Select static middle image</span><span class="fileinput-exists">Change</span><input type="file" name="middle_image_static"></span>
+			  <a href="#" class="input-group-addon btn btn-default fileinput-exists" data-dismiss="fileinput">Remove</a>
+			</div>
 			<?php if (!empty($middle_image)) { ?>
 			<p>Current Middle Image : <a href="javascript:void();" data-toggle="popover" data-placement="top" title="Current Middle Image" data-content="<img src='../upload/news/middle/<?php echo $middle_image; ?>' class='img-responsive' />"><?php echo $middle_image; ?></a></p>
 			<?php } ?>
-			<p class="help-block">If you upload a new one, the old middle image is replaced.</p>
+			<p class="help-block">If you upload a new one (in either field), the old middle image is replaced.</p>
 		  </div>
 		  <div class="form-group">
 			<label for="details">Details</label>
@@ -1118,7 +1161,7 @@ $middle_image = rss_find_middle_image($id);
 (function(){
 	function isEditorialCategory(label) {
 		var t = (label || '').toLowerCase();
-		return t.indexOf('explained') !== -1 || t.indexOf('case & stories') !== -1 || t.indexOf('cases & stories') !== -1 || t.indexOf('case & sotories') !== -1 || t.indexOf('cases & sotories') !== -1;
+		return t.indexOf('explained') !== -1 || t.indexOf('case & stories') !== -1 || t.indexOf('cases & stories') !== -1 || t.indexOf('case & sotories') !== -1 || t.indexOf('cases & sotories') !== -1 || t.indexOf('famous missing person') !== -1;
 	}
 	function toggleMiddleImageField() {
 		var select = document.getElementById('category_id');
