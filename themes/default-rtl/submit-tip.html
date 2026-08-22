@@ -9,6 +9,7 @@
 <p class="case-subtitle">Your report is reviewed by administrators before approval. Please share only verified information.</p>
 </div>
 <div class="case-poster-body">
+<div class="alert alert-info">Your tip post is published anonymously to the public. Your contact information is used only for internal verification when necessary.</div>
 {if !empty($form_message)}
 <div class="alert alert-{$form_message_type}">{$form_message}</div>
 {/if}
@@ -42,6 +43,11 @@
 <div class="form-group">
 <label for="tip_message">Tip Details *</label>
 <textarea class="form-control" id="tip_message" name="tip_message" rows="8" placeholder="Provide specific details about what you saw or know.">{$form_data.tip_message|escape}</textarea>
+</div>
+<div class="checkbox">
+<label>
+<input type="checkbox" name="tip_terms_agreed" value="1" {if isset($form_data.tip_terms_agreed) AND $form_data.tip_terms_agreed eq 1}checked{/if}> I confirm this tip is truthful and relevant, and I accept the <a href="./terms-and-conditions" target="_blank" rel="noopener">Terms and Conditions</a>.
+</label>
 </div>
 {if isset($recaptcha_site_key) AND !empty($recaptcha_site_key)}
 <div class="form-group">

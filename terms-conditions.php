@@ -51,17 +51,27 @@ $terms_content = <<<HTML
 
 <p>For emergencies or information related to an active missing persons case, please contact local law enforcement or the appropriate government agency.</p>
 
-<h2>6. No Law Enforcement or Government Affiliation</h2>
+<h2>6. Tips Submission and Responsibility</h2>
+
+<p>When you submit a tip through Missing-USA.com, you confirm that the information is truthful, relevant to the case, and provided in good faith.</p>
+
+<p>You agree not to submit false information, misleading claims, defamatory content, harassment, or fabricated evidence. Tips that appear malicious, intentionally false, or unrelated may be rejected or removed without notice.</p>
+
+<p>Submitted tips may be reviewed by administrators before publication. Publicly displayed tips are posted anonymously, and identifying contact details are not intended to be shown publicly.</p>
+
+<p>By submitting a tip, you acknowledge that Missing-USA.com may forward relevant information to competent authorities or trusted organizations when necessary for safety or legal compliance.</p>
+
+<h2>7. No Law Enforcement or Government Affiliation</h2>
 
 <p>Missing-USA.com is an independent website and is not affiliated with, endorsed by, sponsored by, or officially connected to any law enforcement agency, government agency, missing persons organization, or emergency service unless explicitly stated.</p>
 
-<h2>7. External Links</h2>
+<h2>8. External Links</h2>
 
 <p>Our website may contain links to third-party websites, news sources, government agencies, or other external resources.</p>
 
 <p>Missing-USA.com has no control over the content, privacy policies, availability, or practices of third-party websites and is not responsible for any information or services provided by those websites.</p>
 
-<h2>8. Copyright and Content Removal</h2>
+<h2>9. Copyright and Content Removal</h2>
 
 <p>We respect the intellectual property rights of others. If you are a copyright owner, content owner, publisher, or authorized representative and believe that content displayed on Missing-USA.com infringes your rights or should be removed, please contact us.</p>
 
@@ -69,7 +79,7 @@ $terms_content = <<<HTML
 
 <p>We will review legitimate removal requests and take appropriate action when necessary.</p>
 
-<h2>9. Disclaimer</h2>
+<h2>10. Disclaimer</h2>
 
 <p>All information on Missing-USA.com is provided on an "as is" and "as available" basis.</p>
 
@@ -77,13 +87,13 @@ $terms_content = <<<HTML
 
 <p>To the fullest extent permitted by applicable law, Missing-USA.com shall not be held liable for any direct, indirect, incidental, consequential, or other damages resulting from the use of, or inability to use, this website or information obtained through third-party sources.</p>
 
-<h2>10. Changes to These Terms</h2>
+<h2>11. Changes to These Terms</h2>
 
 <p>We may update or modify these Terms and Conditions at any time without prior notice. Any changes will become effective immediately upon publication on this page.</p>
 
 <p>We encourage users to review this page periodically to stay informed about any updates.</p>
 
-<h2>11. Contact Us</h2>
+<h2>12. Contact Us</h2>
 
 <p>If you have questions, concerns, copyright requests, correction requests, or would like to request the removal of content, please contact us at:</p>
 

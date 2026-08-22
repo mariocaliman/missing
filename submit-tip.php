@@ -56,7 +56,8 @@ $form_data = array(
     'tip_email' => '',
     'tip_phone' => '',
     'tip_location' => '',
-    'tip_message' => ''
+    'tip_message' => '',
+    'tip_terms_agreed' => 0
 );
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -69,6 +70,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $form_data['tip_phone'] = isset($_POST['tip_phone']) ? trim((string) $_POST['tip_phone']) : '';
     $form_data['tip_location'] = isset($_POST['tip_location']) ? trim((string) $_POST['tip_location']) : '';
     $form_data['tip_message'] = isset($_POST['tip_message']) ? trim((string) $_POST['tip_message']) : '';
+    $form_data['tip_terms_agreed'] = isset($_POST['tip_terms_agreed']) ? 1 : 0;
 
     if ($token === '' || !hash_equals($_SESSION['tip_form_token'], $token)) {
         $form_message_type = 'danger';
@@ -79,6 +81,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } elseif ($honeypot !== '') {
         $form_message_type = 'danger';
         $form_message = 'Invalid submission.';
+    } elseif ($form_data['tip_terms_agreed'] !== 1) {
+        $form_message_type = 'warning';
+        $form_message = 'You must accept the Terms and Conditions before submitting a tip.';
     } elseif ($form_data['tip_name'] === '' || $form_data['tip_email'] === '' || $form_data['tip_message'] === '') {
         $form_message_type = 'warning';
         $form_message = 'Please fill in your name, email, and tip details.';
@@ -113,7 +118,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'tip_email' => '',
                     'tip_phone' => '',
                     'tip_location' => '',
-                    'tip_message' => ''
+                    'tip_message' => '',
+                    'tip_terms_agreed' => 0
                 );
                 $_SESSION['tip_form_token'] = bin2hex(random_bytes(24));
             } else {
