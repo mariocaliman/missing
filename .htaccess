@@ -8,6 +8,9 @@ php_value max_input_time 120
 
 RewriteEngine on
 
+# Friendly article URL for famous missing persons category
+RewriteRule ^famous-missing-persons/([a-z0-9-]+)/?$ news.php?famous_slug=$1 [L,QSA,NC]
+
 # Redirect legacy news URLs like /news/some-slug?uid=12345 to site root
 RewriteRule ^news/[^/]+/?$ https://missing-usa.com/ [R=301,L,NC]
 

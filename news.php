@@ -123,11 +123,72 @@ function rss_is_remote_image_url($value) {
 	return filter_var($value, FILTER_VALIDATE_URL) !== false;
 }
 }
+
+if (!function_exists('rss_is_famous_missing_category')) {
+function rss_is_famous_missing_category($category_name)
+{
+	$normalized = strtolower(trim((string) $category_name));
+	$aliases = array(
+		'famous missing persons cases',
+		'famous missing person cases',
+		'famous missing persons',
+		'famous missing person'
+	);
+	return in_array($normalized, $aliases, true);
+}
+}
+
+if (!function_exists('rss_find_famous_article_by_slug')) {
+function rss_find_famous_article_by_slug($slug)
+{
+	global $mysqli;
+	$slug = trim((string) $slug);
+	if ($slug === '' || !($mysqli instanceof mysqli) || $mysqli->connect_errno) {
+		return 0;
+	}
+
+	$category_ids = array();
+	$categories_q = $mysqli->query("SELECT id, category FROM categories");
+	if ($categories_q) {
+		while ($cat = $categories_q->fetch_assoc()) {
+			if (rss_is_famous_missing_category($cat['category'])) {
+				$category_ids[] = intval($cat['id']);
+			}
+		}
+	}
+
+	if (empty($category_ids)) {
+		return 0;
+	}
+
+	$like = $mysqli->real_escape_string(str_replace('-', '%', $slug));
+	$where_ids = implode(',', $category_ids);
+	$sql = "SELECT * FROM news WHERE published='1' AND category_id IN (" . $where_ids . ") AND title LIKE '%" . $like . "%' ORDER BY id DESC LIMIT 500";
+	$query = $mysqli->query($sql);
+	if (!$query) {
+		return 0;
+	}
+
+	while ($row = $query->fetch_assoc()) {
+		if (slugit($row['title']) === $slug) {
+			return $row;
+		}
+	}
+
+	return 0;
+}
+}
 // recieve the article id and slug variables
-$id = intval(make_safe(xss_clean($_GET['id'])));
-$slug = make_safe(xss_clean($_GET['slug']));
+$id = isset($_GET['id']) ? intval(make_safe(xss_clean($_GET['id']))) : 0;
+$slug = isset($_GET['slug']) ? make_safe(xss_clean($_GET['slug'])) : '';
+$famous_slug = isset($_GET['famous_slug']) ? make_safe(xss_clean($_GET['famous_slug'])) : '';
 $smarty->assign('is_article',1);
-$article = $general->article($id);
+$article = 0;
+if ($id > 0) {
+	$article = $general->article($id);
+} elseif ($famous_slug !== '') {
+	$article = rss_find_famous_article_by_slug($famous_slug);
+}
 // check if the article exists, if not redirect to error page 
 if ($article == 0) {
 header('Location:'.$general_setting['siteurl'].'/not-found');	
@@ -146,6 +207,7 @@ $article_category_url = $general_setting['siteurl'] . '/category/' . intval($art
 $article_category_lower = strtolower($article_category_name);
 $stories_aliases = array('case & stories', 'case & sotories', 'cases & stories', 'cases & sotories');
 $article_category_name_normalized = in_array($article_category_lower,$stories_aliases) ? 'Cases & Stories' : $article_category_name;
+$is_famous_category = rss_is_famous_missing_category($article_category_name) ? 1 : 0;
 $smarty->assign('article_category_name',$article_category_name);
 $smarty->assign('article_category_display_name',$article_category_name_normalized);
 $editorial_categories = array('explained', 'case & stories', 'case & sotories', 'cases & stories', 'cases & sotories');
@@ -168,8 +230,15 @@ $related = $general->related($article['id'],$article['category_id'],$article['ti
 if ($related != 0) {
 $smarty->assign('related',$related);
 }
-$url = $general_setting['siteurl']."/news/".$article['id']."/".slugit($article['title']);
+$famous_url = $general_setting['siteurl']."/famous-missing-persons/".slugit($article['title'])."/";
+$url = $is_famous_category ? $famous_url : ($general_setting['siteurl']."/news/".$article['id']."/".slugit($article['title']));
 $article_url = str_replace(':/','://',str_replace('//','/',($url)));
+
+if ($is_famous_category == 1 && $famous_slug === '') {
+	header('Location:'.$article_url, true, 301);
+	exit;
+}
+
 $smarty->assign('article_url',$article_url);
 $smarty->assign('canonical_url',$article_url);
 $smarty->assign('article_thumbnail_src','');
