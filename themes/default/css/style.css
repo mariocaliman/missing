@@ -121,7 +121,29 @@ display:block;
 .exo-menu {
 min-height:58px;
 background-color:#23364B;
+}
+.exo-menu > li {
+width:100%;
 display:none;
+float:none;
+}
+.exo-menu.display > li {
+display:block;
+}
+.exo-menu > li > a {
+width:100%;
+border-right:0;
+border-bottom:1px solid #365670;
+}
+.drop-down-ul {
+position:relative;
+left:auto;
+min-width:0;
+width:100%;
+}
+.exo-menu > li.drop-down:before {
+right:14px;
+top:20px;
 }
 .donate-widget-card {
 position:relative;
