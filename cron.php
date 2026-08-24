@@ -72,6 +72,27 @@ function upsert_runtime_option($name, $value, $set = 'General')
 	return (bool) $mysqli->query("INSERT INTO options (option_name, option_value, option_default, option_set) VALUES ('" . $name . "', '" . $value . "', '" . $value . "', '" . $set . "')");
 }
 
+function get_runtime_option($name, $default = '')
+{
+	global $mysqli;
+	if (!($mysqli instanceof mysqli) || $mysqli->connect_errno) {
+		return $default;
+	}
+
+	$name = $mysqli->real_escape_string((string) $name);
+	$query = $mysqli->query("SELECT option_value FROM options WHERE option_name='" . $name . "' LIMIT 1");
+	if (!$query || $query->num_rows === 0) {
+		return $default;
+	}
+
+	$row = $query->fetch_assoc();
+	if (!isset($row['option_value'])) {
+		return $default;
+	}
+
+	return (string) $row['option_value'];
+}
+
 function fetch_remote_binary($url, $timeout = 12)
 {
 	$url = trim((string) $url);
@@ -146,14 +167,37 @@ function check_item_url($permalink,$source_id) {
 	$total_sources = 0;
 	$total_inserted = 0;
 	$total_failed = 0;
+	$default_batch_size = 10;
+	$batch_size = intval(get_runtime_option('cron_sources_batch_size', (string) $default_batch_size));
+	if ($batch_size <= 0) {
+		$batch_size = $default_batch_size;
+	}
+	if (isset($_GET['batch'])) {
+		$batch_size = intval($_GET['batch']);
+	}
+	$batch_size = max(1, min(50, $batch_size));
+	$batch_offset = intval(get_runtime_option('cron_sources_offset', '0'));
+	if ($batch_offset < 0) {
+		$batch_offset = 0;
+	}
+	$processed_in_batch = 0;
+	$total_auto_sources = 0;
+	$count_query = $mysqli->query("SELECT COUNT(*) AS total FROM sources WHERE auto_update='1'");
+	if ($count_query && ($count_row = $count_query->fetch_assoc())) {
+		$total_auto_sources = intval($count_row['total']);
+	}
+	if ($total_auto_sources > 0 && $batch_offset >= $total_auto_sources) {
+		$batch_offset = 0;
+	}
 	log_observability_event('cron_start', 'info', 'Automated cron import started.', array('script' => 'cron.php', 'started_at' => date('c', $run_started_at)));
 	upsert_runtime_option('cron_last_run_started_at', date('c', $run_started_at));
 	upsert_runtime_option('cron_last_run_status', 'running');
 	upsert_runtime_option('cron_last_run_inserted', '0');
 	upsert_runtime_option('cron_last_run_failed', '0');
-	$sql = "SELECT * FROM sources WHERE auto_update='1' ORDER BY id ASC";
+	$sql = "SELECT * FROM sources WHERE auto_update='1' ORDER BY id ASC LIMIT " . $batch_offset . "," . $batch_size;
 	$query = $mysqli->query($sql);
-	while ($row = $query->fetch_assoc()) {
+	while ($query && ($row = $query->fetch_assoc())) {
+	$processed_in_batch++;
 	$total_sources++;
 	$source_inserted = 0;
 	$source_failed = 0;
@@ -300,6 +344,17 @@ function check_item_url($permalink,$source_id) {
 	);
 	}
 
+	if ($total_auto_sources > 0) {
+		$next_offset = $batch_offset + $processed_in_batch;
+		if ($next_offset >= $total_auto_sources || $processed_in_batch === 0) {
+			$next_offset = 0;
+		}
+		upsert_runtime_option('cron_sources_offset', (string) $next_offset);
+		upsert_runtime_option('cron_sources_batch_size', (string) $batch_size);
+		upsert_runtime_option('cron_sources_total', (string) $total_auto_sources);
+		upsert_runtime_option('cron_sources_last_batch_processed', (string) $processed_in_batch);
+	}
+
 	$run_finished_at = time();
 	$status = ($total_failed > 0) ? 'partial' : 'success';
 	upsert_runtime_option('cron_last_run_finished_at', date('c', $run_finished_at));
@@ -313,6 +368,9 @@ function check_item_url($permalink,$source_id) {
 		'Automated cron import finished.',
 		array(
 			'sources_processed' => $total_sources,
+			'sources_batch_size' => $batch_size,
+			'sources_batch_offset' => $batch_offset,
+			'sources_total' => $total_auto_sources,
 			'inserted' => $total_inserted,
 			'failed' => $total_failed,
 			'duration_seconds' => ($run_finished_at - $run_started_at)
@@ -320,6 +378,10 @@ function check_item_url($permalink,$source_id) {
 		0,
 		$total_inserted
 	);
+
+	if ($cron_debug_mode || PHP_SAPI === 'cli') {
+		echo 'Cron finished. Batch processed: ' . $total_sources . '/' . $total_auto_sources . ' (offset ' . $batch_offset . ', size ' . $batch_size . ').';
+	}
 
 	if (!empty($options['uptimerobot_heartbeat_url'])) {
 		$heartbeat_ok = ping_uptimerobot_heartbeat($options['uptimerobot_heartbeat_url']);
