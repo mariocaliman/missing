@@ -124,6 +124,79 @@ function rss_is_remote_image_url($value) {
 }
 }
 
+if (!function_exists('rss_build_absolute_image_url')) {
+function rss_build_absolute_image_url($src, $siteurl)
+{
+	$src = trim((string) $src);
+	$siteurl = rtrim((string) $siteurl, '/');
+	if ($src === '') {
+		return '';
+	}
+
+	if (preg_match('~^https?://~i', $src)) {
+		return $src;
+	}
+
+	if (strpos($src, '//') === 0) {
+		return 'https:' . $src;
+	}
+
+	if ($siteurl === '') {
+		return '';
+	}
+
+	if ($src[0] !== '/') {
+		$src = '/' . $src;
+	}
+
+	return $siteurl . $src;
+}
+}
+
+if (!function_exists('rss_extract_first_share_image_from_details')) {
+function rss_extract_first_share_image_from_details($details_html, $siteurl)
+{
+	$details_html = (string) $details_html;
+	if ($details_html === '') {
+		return '';
+	}
+
+	if (!preg_match_all('/<img[^>]+src\s*=\s*["\']([^"\']+)["\']/i', $details_html, $matches)) {
+		return '';
+	}
+
+	$blocked_parts = array(
+		'/themes/default/images/logo',
+		'/themes/default-rtl/images/logo',
+		'/upload/noimage',
+		'logo.'
+	);
+
+	foreach ($matches[1] as $src) {
+		$url = rss_build_absolute_image_url($src, $siteurl);
+		if ($url === '') {
+			continue;
+		}
+
+		$lower = strtolower($url);
+		$blocked = false;
+		foreach ($blocked_parts as $part) {
+			if (strpos($lower, $part) !== false) {
+				$blocked = true;
+				break;
+			}
+		}
+		if ($blocked) {
+			continue;
+		}
+
+		return $url;
+	}
+
+	return '';
+}
+}
+
 if (!function_exists('rss_is_famous_missing_category')) {
 function rss_is_famous_missing_category($category_name)
 {
@@ -211,8 +284,9 @@ $is_famous_category = rss_is_famous_missing_category($article_category_name) ? 1
 $smarty->assign('article_category_name',$article_category_name);
 $smarty->assign('article_category_display_name',$article_category_name_normalized);
 $editorial_categories = array('explained', 'case & stories', 'case & sotories', 'cases & stories', 'cases & sotories');
-$is_editorial_category = in_array($article_category_lower,$editorial_categories) ? 1 : 0;
+$is_editorial_category = (in_array($article_category_lower,$editorial_categories) || $is_famous_category == 1) ? 1 : 0;
 $smarty->assign('is_explained_category',$is_editorial_category);
+$middle_image_name = '';
 if ($is_editorial_category == 1) {
 	$middle_image_name = rss_find_middle_image_for_article($article['id']);
 	$smarty->assign('article_middle_image',$middle_image_name);
@@ -242,6 +316,7 @@ if ($is_famous_category == 1 && $famous_slug === '') {
 $smarty->assign('article_url',$article_url);
 $smarty->assign('canonical_url',$article_url);
 $smarty->assign('article_thumbnail_src','');
+$thumbnail_url = '';
 if (!empty($article['thumbnail'])) {
 	if (rss_is_remote_image_url($article['thumbnail'])) {
 		$thumbnail_url = $article['thumbnail'];
@@ -256,6 +331,22 @@ if (!empty($article['thumbnail'])) {
 		$smarty->assign('thumbnail_width',$thumbnail_dimensions['width']);
 		$smarty->assign('thumbnail_height',$thumbnail_dimensions['height']);
 	}
+}
+
+if (empty($thumbnail_url) && !empty($article['details'])) {
+	$details_image = rss_extract_first_share_image_from_details($article['details'], $general_setting['siteurl']);
+	if (!empty($details_image)) {
+		$thumbnail_url = $details_image;
+		$smarty->assign('thumbnail_url', $thumbnail_url);
+		$smarty->assign('article_thumbnail_src', $thumbnail_url);
+	}
+}
+
+if (empty($thumbnail_url) && !empty($middle_image_name)) {
+	$middle_image = $general_setting['siteurl'].'/upload/news/middle/'.$middle_image_name;
+	$thumbnail_url = str_replace(':/','://',str_replace('//','/',($middle_image)));
+	$smarty->assign('thumbnail_url', $thumbnail_url);
+	$smarty->assign('article_thumbnail_src', './upload/news/middle/'.$middle_image_name);
 }
 // assign the SEO variables (title,keywords,description).	
 $site_title = !empty($general_setting['seo_title']) ? $general_setting['seo_title'] : 'Missing USA';
