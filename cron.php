@@ -2,10 +2,33 @@
 header("Content-type: text/html; charset=utf8");
 set_time_limit(60000*60);
 error_reporting(E_ERROR);
+
+$cron_debug_mode = (isset($_GET['debug']) && $_GET['debug'] === '1');
+if (PHP_SAPI !== 'cli') {
+	ignore_user_abort(true);
+	if (!$cron_debug_mode) {
+		header('Content-Type: text/plain; charset=utf-8');
+		echo "Cron accepted\n";
+		if (function_exists('fastcgi_finish_request')) {
+			fastcgi_finish_request();
+		} else {
+			@ob_flush();
+			@flush();
+		}
+	}
+}
+
 include('include/config.php');
 include('include/connect.php');
 include('include/functions.php');
 include('include/setting.php');
+
+if (!($mysqli instanceof mysqli) || $mysqli->connect_errno) {
+	if ($cron_debug_mode || PHP_SAPI === 'cli') {
+		echo 'Cron aborted: database connection failed.';
+	}
+	exit;
+}
 
 function upsert_runtime_option($name, $value, $set = 'General')
 {
@@ -24,6 +47,45 @@ function upsert_runtime_option($name, $value, $set = 'General')
 	}
 
 	return (bool) $mysqli->query("INSERT INTO options (option_name, option_value, option_default, option_set) VALUES ('" . $name . "', '" . $value . "', '" . $value . "', '" . $set . "')");
+}
+
+function fetch_remote_binary($url, $timeout = 12)
+{
+	$url = trim((string) $url);
+	$timeout = max(3, intval($timeout));
+	if ($url === '' || !filter_var($url, FILTER_VALIDATE_URL)) {
+		return false;
+	}
+
+	if (function_exists('curl_init')) {
+		$ch = curl_init($url);
+		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+		curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+		curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, $timeout);
+		curl_setopt($ch, CURLOPT_TIMEOUT, $timeout);
+		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+		curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+		$data = curl_exec($ch);
+		curl_close($ch);
+		if ($data !== false && $data !== '') {
+			return $data;
+		}
+	}
+
+	$context = stream_context_create(array(
+		'http' => array(
+			'method' => 'GET',
+			'timeout' => $timeout,
+			'ignore_errors' => true,
+			'header' => "User-Agent: Mozilla/5.0\r\n"
+		),
+		'ssl' => array(
+			'verify_peer' => false,
+			'verify_peer_name' => false
+		)
+	));
+
+	return @file_get_contents($url, false, $context);
 }
 // get first image url from sting using HTML dom
 function get_first_image($html){
@@ -161,7 +223,7 @@ function check_item_url($permalink,$source_id) {
 						$filename = '';
 					} else {
 						$filename = 'image_'.time().'_'.rand(0000000,99999999).'.'.$filetype;
-						$image_data = @file_get_contents($image);
+						$image_data = fetch_remote_binary($image, 12);
 						if ($image_data !== false) {
 							$path = 'upload/news/'.$filename;
 							$up = @file_put_contents($path, $image_data);
