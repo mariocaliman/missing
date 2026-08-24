@@ -109,24 +109,24 @@
 		<li class="drop-down{if isset($is_category) AND $is_category eq 1} active{/if}"><a href="#">Categories</a>
 			<ul class="drop-down-ul">
 				{section name=x loop=$categories}
-				{if $categories[x].category|lower ne 'explained' AND $categories[x].category|lower ne 'case & stories' AND $categories[x].category|lower ne 'case & sotories' AND $categories[x].category|lower ne 'cases & stories' AND $categories[x].category|lower ne 'cases & sotories'}
+				{if $categories[x].menu_view eq 1 AND $categories[x].category|lower ne 'explained' AND $categories[x].category|lower ne 'case & stories' AND $categories[x].category|lower ne 'case & sotories' AND $categories[x].category|lower ne 'cases & stories' AND $categories[x].category|lower ne 'cases & sotories'}
 				<li class="{if isset($is_category) AND $is_category eq 1 AND $category_id eq $categories[x].id}active{/if}"><a href="./category/{$categories[x].id}/{$categories[x].category|html_decode|slug}">{$categories[x].category}</a></li>
 				{/if}
 				{/section}
 			</ul>
 		</li>
 		{section name=x loop=$categories}
-		{if $categories[x].category|lower eq 'explained'}
+		{if $categories[x].menu_view eq 1 AND $categories[x].category|lower eq 'explained'}
 		<li class="{if isset($is_category) AND $is_category eq 1 AND $category_id eq $categories[x].id}active{/if}"><a href="./category/{$categories[x].id}/{$categories[x].category|html_decode|slug}">{$categories[x].category}</a></li>
 		{/if}
 		{/section}
 		{section name=x loop=$categories}
-		{if $categories[x].category|lower eq 'case & stories' OR $categories[x].category|lower eq 'case & sotories' OR $categories[x].category|lower eq 'cases & stories' OR $categories[x].category|lower eq 'cases & sotories'}
+		{if $categories[x].menu_view eq 1 AND ($categories[x].category|lower eq 'case & stories' OR $categories[x].category|lower eq 'case & sotories' OR $categories[x].category|lower eq 'cases & stories' OR $categories[x].category|lower eq 'cases & sotories')}
 		<li class="{if isset($is_category) AND $is_category eq 1 AND $category_id eq $categories[x].id}active{/if}"><a href="./category/{$categories[x].id}/{$categories[x].category|html_decode|slug}">Cases &amp; Stories</a></li>
 		{/if}
 		{/section}
 		{section name=x loop=$categories}
-		{if $categories[x].category|lower eq 'famous missing persons cases'}
+		{if $categories[x].menu_view eq 1 AND $categories[x].category|lower eq 'famous missing persons cases'}
 		<li class="{if isset($is_category) AND $is_category eq 1 AND $category_id eq $categories[x].id}active{/if}"><a href="./category/{$categories[x].id}/{$categories[x].category|html_decode|slug}">Famous Missing Persons Cases</a></li>
 		{/if}
 		{/section}

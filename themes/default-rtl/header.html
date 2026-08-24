@@ -100,12 +100,14 @@
 		<li class="drop-down{if isset($is_category) AND $is_category eq 1} active{/if}"><a href="#">Categories</a>
 			<ul class="drop-down-ul">
 				{section name=x loop=$categories}
+				{if $categories[x].menu_view eq 1 AND $categories[x].category|lower ne 'famous missing persons cases'}
 				<li class="{if isset($is_category) AND $is_category eq 1 AND $category_id eq $categories[x].id}active{/if}"><a href="./category/{$categories[x].id}/{$categories[x].category|html_decode|slug}">{$categories[x].category}</a></li>
+				{/if}
 				{/section}
 			</ul>
 		</li>
 		{section name=x loop=$categories}
-		{if $categories[x].category|lower eq 'famous missing persons cases'}
+		{if $categories[x].menu_view eq 1 AND $categories[x].category|lower eq 'famous missing persons cases'}
 		<li class="{if isset($is_category) AND $is_category eq 1 AND $category_id eq $categories[x].id}active{/if}"><a href="./category/{$categories[x].id}/{$categories[x].category|html_decode|slug}">Famous Missing Persons Cases</a></li>
 		{/if}
 		{/section}
