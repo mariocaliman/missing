@@ -51,6 +51,7 @@
 	{if isset($general_twitter_creator) AND !empty($general_twitter_creator)}<meta name="twitter:creator" content="{$general_twitter_creator|escape}" />{/if}
 	{if !empty($thumbnail_url)}
 	<meta property="og:image" content="{$thumbnail_url}" />
+	{if isset($thumbnail_secure_url) AND !empty($thumbnail_secure_url)}<meta property="og:image:secure_url" content="{$thumbnail_secure_url}" />{/if}
 	<meta name="twitter:image" content="{$thumbnail_url}" />
 	<meta name="twitter:card" content="summary_large_image" />
 	{else}

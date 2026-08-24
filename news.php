@@ -197,6 +197,23 @@ function rss_extract_first_share_image_from_details($details_html, $siteurl)
 }
 }
 
+if (!function_exists('rss_normalize_share_image_url')) {
+function rss_normalize_share_image_url($url)
+{
+	$url = trim((string) $url);
+	if ($url === '') {
+		return '';
+	}
+
+	$parts = @parse_url($url);
+	if ($parts && isset($parts['scheme']) && strtolower($parts['scheme']) === 'http') {
+		$url = 'https://' . ltrim(substr($url, 7), '/');
+	}
+
+	return $url;
+}
+}
+
 if (!function_exists('rss_is_famous_missing_category')) {
 function rss_is_famous_missing_category($category_name)
 {
@@ -319,7 +336,7 @@ $smarty->assign('article_thumbnail_src','');
 $thumbnail_url = '';
 if (!empty($article['thumbnail'])) {
 	if (rss_is_remote_image_url($article['thumbnail'])) {
-		$thumbnail_url = $article['thumbnail'];
+		$thumbnail_url = rss_normalize_share_image_url($article['thumbnail']);
 		$smarty->assign('thumbnail_url',$thumbnail_url);
 		$smarty->assign('article_thumbnail_src',$thumbnail_url);
 	} else {
@@ -336,7 +353,7 @@ if (!empty($article['thumbnail'])) {
 if (empty($thumbnail_url) && !empty($article['details'])) {
 	$details_image = rss_extract_first_share_image_from_details($article['details'], $general_setting['siteurl']);
 	if (!empty($details_image)) {
-		$thumbnail_url = $details_image;
+		$thumbnail_url = rss_normalize_share_image_url($details_image);
 		$smarty->assign('thumbnail_url', $thumbnail_url);
 		$smarty->assign('article_thumbnail_src', $thumbnail_url);
 	}
@@ -345,8 +362,13 @@ if (empty($thumbnail_url) && !empty($article['details'])) {
 if (empty($thumbnail_url) && !empty($middle_image_name)) {
 	$middle_image = $general_setting['siteurl'].'/upload/news/middle/'.$middle_image_name;
 	$thumbnail_url = str_replace(':/','://',str_replace('//','/',($middle_image)));
+	$thumbnail_url = rss_normalize_share_image_url($thumbnail_url);
 	$smarty->assign('thumbnail_url', $thumbnail_url);
 	$smarty->assign('article_thumbnail_src', './upload/news/middle/'.$middle_image_name);
+}
+
+if (!empty($thumbnail_url)) {
+	$smarty->assign('thumbnail_secure_url', rss_normalize_share_image_url($thumbnail_url));
 }
 // assign the SEO variables (title,keywords,description).	
 $site_title = !empty($general_setting['seo_title']) ? $general_setting['seo_title'] : 'Missing USA';
