@@ -10,7 +10,7 @@ error_reporting(E_ERROR); // hide notices and warnings and show only the real er
 include("../include/config.php");
 include("../include/connect.php");
 include("include/functions.php");
-include("../include/donation_tracking.php");
+include_once("../include/donation_tracking.php");
 include("include/setting.php");
 include("include/general.class.php");
 include("include/upload.class.php");

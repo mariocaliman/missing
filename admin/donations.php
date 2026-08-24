@@ -1,6 +1,5 @@
 <?php
 include('header.php');
-include('../include/donation_tracking.php');
 
 $days = isset($_GET['days']) ? intval($_GET['days']) : 30;
 if ($days < 1) {
