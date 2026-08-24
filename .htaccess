@@ -73,6 +73,11 @@ Header set Cache-Control "public, max-age=31536000, immutable"
 <FilesMatch "\.(html|php)$">
 Header set Cache-Control "public, max-age=300, must-revalidate"
 </FilesMatch>
+<FilesMatch "^(cron|uptime)\.php$">
+Header set Cache-Control "no-store, no-cache, must-revalidate, max-age=0"
+Header set Pragma "no-cache"
+Header set Expires "0"
+</FilesMatch>
 Header unset ETag
 
 # Security headers
