@@ -2,6 +2,35 @@
 include(__DIR__ . '/include/autoloader.php');
 include(__DIR__ . '/include/donation_tracking.php');
 
+if (!function_exists('rss_is_state_category_name')) {
+	function rss_is_state_category_name($name)
+	{
+		$name = trim((string) $name);
+		return (bool) preg_match('/^[A-Z]{2}\s*-\s+/', $name);
+	}
+}
+
+if (!function_exists('rss_compare_categories_by_news_count')) {
+	function rss_compare_categories_by_news_count($a, $b)
+	{
+		$a_count = isset($a['published_count']) ? intval($a['published_count']) : 0;
+		$b_count = isset($b['published_count']) ? intval($b['published_count']) : 0;
+
+		if ($a_count === $b_count) {
+			$a_order = isset($a['category_order']) ? intval($a['category_order']) : 0;
+			$b_order = isset($b['category_order']) ? intval($b['category_order']) : 0;
+			if ($a_order === $b_order) {
+				$a_id = isset($a['id']) ? intval($a['id']) : 0;
+				$b_id = isset($b['id']) ? intval($b['id']) : 0;
+				return ($a_id < $b_id) ? -1 : 1;
+			}
+			return ($a_order < $b_order) ? -1 : 1;
+		}
+
+		return ($a_count > $b_count) ? -1 : 1;
+	}
+}
+
 if (($mysqli instanceof mysqli) && !$mysqli->connect_errno) {
 	$donation_status = isset($_GET['donation_status']) ? trim($_GET['donation_status']) : '';
 	$donation_ref = isset($_GET['donation_ref']) ? trim($_GET['donation_ref']) : '';
@@ -31,6 +60,48 @@ if ($mysqli instanceof mysqli && !$mysqli->connect_errno) {
 	$smarty->assign('db_available',0);
 }
 $smarty->assign('latest_home',$latest_home);
+
+$home_categories = array();
+if (($mysqli instanceof mysqli) && !$mysqli->connect_errno && isset($categories) && is_array($categories)) {
+	$selected_categories = array();
+	foreach ($categories as $category_item) {
+		if (intval($category_item['index_view']) === 1) {
+			$selected_categories[] = $category_item;
+		}
+	}
+
+	$pool_categories = !empty($selected_categories) ? $selected_categories : $categories;
+	$published_counts = array();
+	$count_query = $mysqli->query("SELECT category_id, COUNT(*) AS total FROM news WHERE published='1' GROUP BY category_id");
+	if ($count_query && $count_query->num_rows > 0) {
+		while ($count_row = $count_query->fetch_assoc()) {
+			$published_counts[intval($count_row['category_id'])] = intval($count_row['total']);
+		}
+	}
+
+	$state_categories = array();
+	$other_categories = array();
+	foreach ($pool_categories as $category_item) {
+		$category_id = intval($category_item['id']);
+		$category_item['published_count'] = isset($published_counts[$category_id]) ? intval($published_counts[$category_id]) : 0;
+
+		if (rss_is_state_category_name($category_item['category'])) {
+			if ($category_item['published_count'] > 0) {
+				$state_categories[] = $category_item;
+			}
+		} else {
+			$other_categories[] = $category_item;
+		}
+	}
+
+	if (!empty($state_categories)) {
+		usort($state_categories, 'rss_compare_categories_by_news_count');
+	}
+
+	$home_categories = array_merge($other_categories, $state_categories);
+}
+
+$smarty->assign('home_categories', !empty($home_categories) ? $home_categories : 0);
 
 if (isset($db_available) && !$db_available) {
 	header('Content-Type: text/html; charset=UTF-8');

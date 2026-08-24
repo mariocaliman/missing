@@ -30,25 +30,24 @@
 <div class="col-md-8">
 <!-- Homepage Categories Loop -->
 {assign var="home_sections" value=0}
-{assign var="home_selected_count" value=0}
 {assign var="home_shown_count" value=0}
 {assign var="home_max_sections" value=10}
-{section name=i loop=$categories}
-{if $categories[i].index_view eq 1}
-{assign var="home_selected_count" value=$home_selected_count+1}
+{if isset($home_categories) AND $home_categories neq 0}
+{assign var="home_loop_categories" value=$home_categories}
+{else}
+{assign var="home_loop_categories" value=$categories}
 {/if}
-{/section}
-{section name=x loop=$categories}
-{if ($categories[x].index_view eq 1 OR $home_selected_count eq 0) AND $home_shown_count lt $home_max_sections}
-{assign var="category_news" value=$categories[x].id|news_in_category:$theme_home_category_news_number}
+{section name=x loop=$home_loop_categories}
+{if $home_shown_count lt $home_max_sections}
+{assign var="category_news" value=$home_loop_categories[x].id|news_in_category:$theme_home_category_news_number}
 {if $category_news neq 0}
 {assign var="home_sections" value=1}
 {assign var="home_shown_count" value=$home_shown_count+1}
 <div class="section-box category-spotlight">
 <!-- Category Title -->
 <div class="section-head">
-<h4>{$categories[x].category}</h4>
-<a class="more-link" href="./category/{$categories[x].id}/{$categories[x].category|html_decode|slug}">More</a>
+<h4>{$home_loop_categories[x].category}</h4>
+<a class="more-link" href="./category/{$home_loop_categories[x].id}/{$home_loop_categories[x].category|html_decode|slug}">More</a>
 </div>
 <!-- Category News Loop -->
 {foreach name=x from=$category_news key=id item=news}
