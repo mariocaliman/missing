@@ -2,6 +2,7 @@
 header("Content-type: text/html; charset=utf8");
 set_time_limit(60000*60);
 error_reporting(E_ERROR);
+ini_set('default_socket_timeout', '20');
 
 $cron_debug_mode = (isset($_GET['debug']) && $_GET['debug'] === '1');
 if (PHP_SAPI !== 'cli') {
@@ -22,6 +23,28 @@ include('include/config.php');
 include('include/connect.php');
 include('include/functions.php');
 include('include/setting.php');
+
+$cron_lock_file = __DIR__ . '/cache/cron.lock';
+$cron_lock_handle = @fopen($cron_lock_file, 'c');
+if (!$cron_lock_handle) {
+	if ($cron_debug_mode || PHP_SAPI === 'cli') {
+		echo 'Cron aborted: unable to create lock file.';
+	}
+	exit;
+}
+
+if (!@flock($cron_lock_handle, LOCK_EX | LOCK_NB)) {
+	if ($cron_debug_mode || PHP_SAPI === 'cli') {
+		echo 'Cron skipped: another run is already in progress.';
+	}
+	@fclose($cron_lock_handle);
+	exit;
+}
+
+register_shutdown_function(function () use ($cron_lock_handle) {
+	@flock($cron_lock_handle, LOCK_UN);
+	@fclose($cron_lock_handle);
+});
 
 if (!($mysqli instanceof mysqli) || $mysqli->connect_errno) {
 	if ($cron_debug_mode || PHP_SAPI === 'cli') {
@@ -147,6 +170,7 @@ function check_item_url($permalink,$source_id) {
 		if (class_exists('SimplePie\\SimplePie')) {
 			$feed = new \SimplePie\SimplePie();
 			$feed->set_useragent();
+			$feed->set_timeout(20);
 			$feed->set_feed_url($rss_link);
 			$feed->strip_htmltags(false);
 			$feed->force_feed(true);
