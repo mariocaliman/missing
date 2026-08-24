@@ -96,6 +96,7 @@ if (($mysqli instanceof mysqli) && !$mysqli->connect_errno && isset($categories)
 
 	if (!empty($state_categories)) {
 		usort($state_categories, 'rss_compare_categories_by_news_count');
+		$state_categories = array_slice($state_categories, 0, 7);
 	}
 
 	$home_categories = array_merge($other_categories, $state_categories);
