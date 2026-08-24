@@ -214,6 +214,127 @@ function rss_normalize_share_image_url($url)
 }
 }
 
+if (!function_exists('rss_detect_image_extension_from_content_type')) {
+function rss_detect_image_extension_from_content_type($content_type)
+{
+	$content_type = strtolower(trim((string) $content_type));
+	if ($content_type === 'image/jpeg' || $content_type === 'image/jpg') {
+		return 'jpg';
+	}
+	if ($content_type === 'image/png') {
+		return 'png';
+	}
+	if ($content_type === 'image/webp') {
+		return 'webp';
+	}
+	if ($content_type === 'image/gif') {
+		return 'gif';
+	}
+	return '';
+}
+}
+
+if (!function_exists('rss_cache_remote_share_image')) {
+function rss_cache_remote_share_image($remote_url, $article_id)
+{
+	$remote_url = trim((string) $remote_url);
+	$article_id = intval($article_id);
+	if ($remote_url === '' || $article_id <= 0 || !filter_var($remote_url, FILTER_VALIDATE_URL)) {
+		return '';
+	}
+
+	$cache_dir = __DIR__ . '/upload/news/share/';
+	if (!is_dir($cache_dir) && !@mkdir($cache_dir, 0755, true)) {
+		return '';
+	}
+
+	$existing = glob($cache_dir . 'article_' . $article_id . '.*');
+	if ($existing && isset($existing[0]) && is_file($existing[0])) {
+		$age = time() - filemtime($existing[0]);
+		if ($age < 86400 * 7) {
+			return basename($existing[0]);
+		}
+	}
+
+	$body = false;
+	$content_type = '';
+	if (function_exists('curl_init')) {
+		$ch = curl_init($remote_url);
+		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+		curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+		curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 12);
+		curl_setopt($ch, CURLOPT_TIMEOUT, 15);
+		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+		curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+		curl_setopt($ch, CURLOPT_USERAGENT, 'facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_uatext.php)');
+		$body = curl_exec($ch);
+		$content_type = (string) curl_getinfo($ch, CURLINFO_CONTENT_TYPE);
+		$http_code = intval(curl_getinfo($ch, CURLINFO_HTTP_CODE));
+		curl_close($ch);
+		if ($http_code < 200 || $http_code >= 400) {
+			$body = false;
+		}
+	}
+
+	if ($body === false) {
+		$context = stream_context_create(array(
+			'http' => array(
+				'method' => 'GET',
+				'timeout' => 15,
+				'ignore_errors' => true,
+				'header' => "User-Agent: facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_uatext.php)\r\n"
+			)
+		));
+		$body = @file_get_contents($remote_url, false, $context);
+	}
+
+	if ($body === false || $body === '') {
+		return '';
+	}
+
+	if (strlen($body) > 8 * 1024 * 1024) {
+		return '';
+	}
+
+	$ext = '';
+	$path_ext = strtolower(pathinfo(parse_url($remote_url, PHP_URL_PATH), PATHINFO_EXTENSION));
+	if (in_array($path_ext, array('jpg', 'jpeg', 'png', 'gif', 'webp'), true)) {
+		$ext = ($path_ext === 'jpeg') ? 'jpg' : $path_ext;
+	}
+	if ($ext === '') {
+		$ext = rss_detect_image_extension_from_content_type($content_type);
+	}
+	if ($ext === '') {
+		$img_info = @getimagesizefromstring($body);
+		if ($img_info && isset($img_info['mime'])) {
+			$ext = rss_detect_image_extension_from_content_type($img_info['mime']);
+		}
+	}
+	if ($ext === '') {
+		$ext = 'jpg';
+	}
+
+	foreach (glob($cache_dir . 'article_' . $article_id . '.*') as $old_file) {
+		@unlink($old_file);
+	}
+
+	$filename = 'article_' . $article_id . '.' . $ext;
+	$target = $cache_dir . $filename;
+	$written = @file_put_contents($target, $body);
+	if ($written === false || !is_file($target)) {
+		return '';
+	}
+
+	$img_info = @getimagesize($target);
+	if ($img_info === false || intval($img_info[0]) < 40 || intval($img_info[1]) < 40) {
+		@unlink($target);
+		return '';
+	}
+
+	return $filename;
+}
+}
+
 if (!function_exists('rss_is_famous_missing_category')) {
 function rss_is_famous_missing_category($category_name)
 {
@@ -337,6 +458,10 @@ $thumbnail_url = '';
 if (!empty($article['thumbnail'])) {
 	if (rss_is_remote_image_url($article['thumbnail'])) {
 		$thumbnail_url = rss_normalize_share_image_url($article['thumbnail']);
+		$cached_share_image = rss_cache_remote_share_image($thumbnail_url, $article['id']);
+		if ($cached_share_image !== '' && !empty($general_setting['siteurl'])) {
+			$thumbnail_url = rtrim($general_setting['siteurl'], '/') . '/upload/news/share/' . $cached_share_image;
+		}
 		$smarty->assign('thumbnail_url',$thumbnail_url);
 		$smarty->assign('article_thumbnail_src',$thumbnail_url);
 	} else {
@@ -354,6 +479,12 @@ if (empty($thumbnail_url) && !empty($article['details'])) {
 	$details_image = rss_extract_first_share_image_from_details($article['details'], $general_setting['siteurl']);
 	if (!empty($details_image)) {
 		$thumbnail_url = rss_normalize_share_image_url($details_image);
+		if (rss_is_remote_image_url($thumbnail_url)) {
+			$cached_share_image = rss_cache_remote_share_image($thumbnail_url, $article['id']);
+			if ($cached_share_image !== '' && !empty($general_setting['siteurl'])) {
+				$thumbnail_url = rtrim($general_setting['siteurl'], '/') . '/upload/news/share/' . $cached_share_image;
+			}
+		}
 		$smarty->assign('thumbnail_url', $thumbnail_url);
 		$smarty->assign('article_thumbnail_src', $thumbnail_url);
 	}
