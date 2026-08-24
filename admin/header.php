@@ -10,6 +10,7 @@ error_reporting(E_ERROR); // hide notices and warnings and show only the real er
 include("../include/config.php");
 include("../include/connect.php");
 include("include/functions.php");
+include("../include/donation_tracking.php");
 include("include/setting.php");
 include("include/general.class.php");
 include("include/upload.class.php");
@@ -21,6 +22,30 @@ $general->set_connection($mysqli);
 // fetch the current url to get the page name
 $parts = Explode('/', $_SERVER["PHP_SELF"]);
 $currenttab = $parts[count($parts) - 1];
+
+$pending_tips_count = 0;
+$pending_donations_count = 0;
+$pending_tickets_count = 0;
+if (($mysqli instanceof mysqli) && !$mysqli->connect_errno) {
+	ensure_news_tips_table();
+	ensure_support_tickets_table();
+	donation_tracking_ensure_table($mysqli);
+
+	$tips_result = $mysqli->query("SELECT COUNT(*) AS total FROM news_tips WHERE status='pending'");
+	if ($tips_result && ($tips_row = $tips_result->fetch_assoc())) {
+		$pending_tips_count = intval($tips_row['total']);
+	}
+
+	$donations_result = $mysqli->query("SELECT COUNT(*) AS total FROM donation_tracking WHERE status='pending'");
+	if ($donations_result && ($donations_row = $donations_result->fetch_assoc())) {
+		$pending_donations_count = intval($donations_row['total']);
+	}
+
+	$tickets_result = $mysqli->query("SELECT COUNT(*) AS total FROM support_tickets WHERE status='open'");
+	if ($tickets_result && ($tickets_row = $tickets_result->fetch_assoc())) {
+		$pending_tickets_count = intval($tickets_row['total']);
+	}
+}
 ?>
 <!DOCTYPE html>
 <html>
@@ -45,6 +70,23 @@ $currenttab = $parts[count($parts) - 1];
 	<script src="assets/js/plugins/tinymce/tinymce.min.js"></script>
 	<script src="assets/js/plugins/tinymce/tinymce-function.js"></script>
 	<script src="assets/js/functions.js"></script>
+	<style>
+	.admin-alert-badge {
+		display: inline-block;
+		min-width: 18px;
+		height: 18px;
+		line-height: 18px;
+		padding: 0 6px;
+		margin-left: 6px;
+		border-radius: 999px;
+		background: #e53935;
+		color: #fff;
+		font-size: 11px;
+		font-weight: 700;
+		text-align: center;
+		vertical-align: middle;
+	}
+	</style>
 </head>
 <body class="admin-shell">
 <nav class="navbar navbar-inverse navbar-fixed-top admin-navbar" role="navigation">
@@ -65,9 +107,9 @@ $currenttab = $parts[count($parts) - 1];
                     <li <?php if ($currenttab == 'categories.php') { ?>class="active"<?php } ?>><a href="categories.php"><span class="fa fa-reorder"></span> Categories</a></li>
                     <li <?php if ($currenttab == 'sources.php') { ?>class="active"<?php } ?>><a href="sources.php"><span class="fa fa-rss"></span> Sources</a></li>
 					<li <?php if ($currenttab == 'news.php') { ?>class="active"<?php } ?>><a href="news.php"><span class="fa fa-newspaper-o"></span> News</a></li>
-					<li <?php if ($currenttab == 'tips.php') { ?>class="active"<?php } ?>><a href="tips.php"><span class="fa fa-shield"></span> Tips</a></li>
-					<li <?php if ($currenttab == 'donations.php') { ?>class="active"<?php } ?>><a href="donations.php"><span class="fa fa-heart"></span> Donations</a></li>
-					<li <?php if ($currenttab == 'tickets.php') { ?>class="active"<?php } ?>><a href="tickets.php"><span class="fa fa-life-ring"></span> Tickets</a></li>
+					<li <?php if ($currenttab == 'tips.php') { ?>class="active"<?php } ?>><a href="tips.php"><span class="fa fa-shield"></span> Tips<?php if ($pending_tips_count > 0) { ?><span class="admin-alert-badge"><?php echo $pending_tips_count; ?></span><?php } ?></a></li>
+					<li <?php if ($currenttab == 'donations.php') { ?>class="active"<?php } ?>><a href="donations.php"><span class="fa fa-heart"></span> Donations<?php if ($pending_donations_count > 0) { ?><span class="admin-alert-badge"><?php echo $pending_donations_count; ?></span><?php } ?></a></li>
+					<li <?php if ($currenttab == 'tickets.php') { ?>class="active"<?php } ?>><a href="tickets.php"><span class="fa fa-life-ring"></span> Tickets<?php if ($pending_tickets_count > 0) { ?><span class="admin-alert-badge"><?php echo $pending_tickets_count; ?></span><?php } ?></a></li>
 					<li <?php if ($currenttab == 'links.php') { ?>class="active"<?php } ?>><a href="links.php"><span class="fa fa-link"></span> Links</a></li>
 					<li <?php if ($currenttab == 'pages.php') { ?>class="active"<?php } ?>><a href="pages.php"><span class="fa fa-file"></span> Pages</a></li>
 					<li class="dropdown">
