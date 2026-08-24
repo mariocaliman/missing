@@ -70,23 +70,6 @@ if (($mysqli instanceof mysqli) && !$mysqli->connect_errno) {
 	<script src="assets/js/plugins/tinymce/tinymce.min.js"></script>
 	<script src="assets/js/plugins/tinymce/tinymce-function.js"></script>
 	<script src="assets/js/functions.js"></script>
-	<style>
-	.admin-alert-badge {
-		display: inline-block;
-		min-width: 18px;
-		height: 18px;
-		line-height: 18px;
-		padding: 0 6px;
-		margin-left: 6px;
-		border-radius: 999px;
-		background: #e53935;
-		color: #fff;
-		font-size: 11px;
-		font-weight: 700;
-		text-align: center;
-		vertical-align: middle;
-	}
-	</style>
 </head>
 <body class="admin-shell">
 <nav class="navbar navbar-inverse navbar-fixed-top admin-navbar" role="navigation">
