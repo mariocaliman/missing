@@ -119,18 +119,72 @@ function strip_markdown_fences($text)
 	return trim((string) $text);
 }
 
-function generate_timeline_with_ai_for_cron($title, $details, $language, &$error_message = '')
+function timeline_contains_future_dates_for_cron($timeline_html, &$future_examples = array())
 {
-	$title = trim((string) $title);
-	$details_plain = trim(strip_tags(html_entity_decode((string) $details, ENT_QUOTES, 'UTF-8')));
-	$details_plain = preg_replace('/\s+/u', ' ', $details_plain);
-	if ($title === '' || $details_plain === '') {
-		$error_message = 'Missing title or details for timeline generation.';
+	$future_examples = array();
+	$text = html_entity_decode((string) $timeline_html, ENT_QUOTES, 'UTF-8');
+	$text = preg_replace('/\s+/u', ' ', strip_tags($text));
+	if ($text === '') {
 		return false;
 	}
 
-	if (mb_strlen($details_plain, 'UTF-8') > 4000) {
-		$details_plain = mb_substr($details_plain, 0, 4000, 'UTF-8');
+	$now_end = strtotime(date('Y-m-d 23:59:59'));
+	$patterns = array(
+		'/\b(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\s+\d{1,2},\s+\d{4}\b/i',
+		'/\b(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\s+\d{4}\b/i',
+		'/\b\d{1,2}[\/\-]\d{1,2}[\/\-](?:\d{2}|\d{4})\b/'
+	);
+
+	foreach ($patterns as $pattern) {
+		if (!preg_match_all($pattern, $text, $matches)) {
+			continue;
+		}
+		foreach ($matches[0] as $raw_date) {
+			$ts = strtotime($raw_date);
+			if ($ts !== false && $ts > $now_end) {
+				$future_examples[] = $raw_date;
+			}
+		}
+	}
+
+	return !empty($future_examples);
+}
+
+function prepare_timeline_evidence_for_cron($details, $permalink = '')
+{
+	$details_plain = trim(strip_tags(html_entity_decode((string) $details, ENT_QUOTES, 'UTF-8')));
+	$details_plain = preg_replace('/\s+/u', ' ', $details_plain);
+	$evidence_parts = array();
+	if ($details_plain !== '') {
+		$evidence_parts[] = 'Existing article details: ' . $details_plain;
+	}
+
+	$permalink = trim((string) $permalink);
+	if ($permalink !== '' && filter_var($permalink, FILTER_VALIDATE_URL) && function_exists('get_article_data_from_url')) {
+		$fresh = get_article_data_from_url($permalink, '');
+		if (is_array($fresh) && !empty($fresh['details'])) {
+			$fresh_plain = trim(strip_tags(html_entity_decode((string) $fresh['details'], ENT_QUOTES, 'UTF-8')));
+			$fresh_plain = preg_replace('/\s+/u', ' ', $fresh_plain);
+			if ($fresh_plain !== '') {
+				$evidence_parts[] = 'Fresh web source content: ' . $fresh_plain;
+			}
+		}
+	}
+
+	$merged = trim(implode("\n\n", $evidence_parts));
+	if (mb_strlen($merged, 'UTF-8') > 5200) {
+		$merged = mb_substr($merged, 0, 5200, 'UTF-8');
+	}
+	return $merged;
+}
+
+function generate_timeline_with_ai_for_cron($title, $details, $language, &$error_message = '', $permalink = '')
+{
+	$title = trim((string) $title);
+	$evidence = prepare_timeline_evidence_for_cron($details, $permalink);
+	if ($title === '' || $evidence === '') {
+		$error_message = 'Missing title or details for timeline generation.';
+		return false;
 	}
 
 	$api_key = get_ai_runtime_option('openai_api_key', '');
@@ -163,11 +217,11 @@ function generate_timeline_with_ai_for_cron($title, $details, $language, &$error
 	$messages = array(
 		array(
 			'role' => 'system',
-			'content' => 'You are an investigative newsroom assistant. Return valid HTML only. No markdown fences.'
+			'content' => 'You are an investigative newsroom assistant. Return valid HTML only. No markdown fences. Use only facts that are explicitly present in the provided evidence.'
 		),
 		array(
 			'role' => 'user',
-			'content' => "Create a case timeline update for this missing person report in {$language}. Title: {$title}. Source details: {$details_plain}. Include: (1) h2 heading 'Case Timeline', (2) 4-8 bullet items in chronological order, (3) h2 heading 'Potential New Leads to Verify', and (4) a short paragraph with verification guidance. Use cautious language when details are uncertain and avoid inventing specific names or addresses."
+			'content' => "Create a case timeline update for this missing person report in {$language}. Title: {$title}. Verified evidence: {$evidence}. Current date: " . date('F j, Y') . ". Rules: use only facts and dates explicitly present in the evidence; do not invent names, events, or dates; never output future dates relative to current date; if a date is uncertain, write 'Date not confirmed'; if there are no new verified facts, explicitly state that there are no new verified updates. Include: (1) h2 heading 'Case Timeline', (2) 4-8 bullet items in chronological order, (3) h2 heading 'Potential New Leads to Verify', and (4) a short paragraph with verification guidance."
 		)
 	);
 
@@ -228,6 +282,12 @@ function generate_timeline_with_ai_for_cron($title, $details, $language, &$error
 		return false;
 	}
 
+	$future_examples = array();
+	if (timeline_contains_future_dates_for_cron($content, $future_examples)) {
+		$error_message = 'Timeline blocked due to future dates: ' . implode(', ', array_slice($future_examples, 0, 3));
+		return false;
+	}
+
 	return $content;
 }
 
@@ -268,7 +328,7 @@ function run_daily_timeline_updates($daily_limit = 2)
 	$errors = array();
 	$processed_ids = array();
 
-	$candidates_sql = "SELECT id,title,details FROM news WHERE published='1' AND details<>'' ORDER BY RAND() LIMIT 40";
+	$candidates_sql = "SELECT id,title,details,permalink FROM news WHERE published='1' AND details<>'' ORDER BY RAND() LIMIT 40";
 	$candidates_q = $mysqli->query($candidates_sql);
 	if (!$candidates_q || $candidates_q->num_rows === 0) {
 		upsert_runtime_option('cron_timeline_daily_last_date', $today_key);
@@ -286,6 +346,7 @@ function run_daily_timeline_updates($daily_limit = 2)
 
 		$title = isset($row['title']) ? (string) $row['title'] : '';
 		$details_encoded = isset($row['details']) ? (string) $row['details'] : '';
+		$permalink = isset($row['permalink']) ? (string) $row['permalink'] : '';
 		$plain = trim(strip_tags(html_entity_decode($details_encoded, ENT_QUOTES, 'UTF-8')));
 		if ($plain === '' || mb_strlen($plain, 'UTF-8') < 120) {
 			continue;
@@ -293,7 +354,7 @@ function run_daily_timeline_updates($daily_limit = 2)
 
 		$attempted++;
 		$timeline_error = '';
-		$timeline_html = generate_timeline_with_ai_for_cron($title, $details_encoded, 'English', $timeline_error);
+		$timeline_html = generate_timeline_with_ai_for_cron($title, $details_encoded, 'English', $timeline_error, $permalink);
 		if ($timeline_html === false) {
 			$errors[] = 'article #' . $article_id . ': ' . $timeline_error;
 			continue;

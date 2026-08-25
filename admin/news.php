@@ -524,6 +524,98 @@ function rss_generate_image_with_ai($prompt, &$error_message = '') {
 }
 }
 
+if (!function_exists('rss_generate_case_timeline_with_ai')) {
+function rss_timeline_contains_future_dates($timeline_html, &$future_examples = array()) {
+	$future_examples = array();
+	$text = html_entity_decode((string) $timeline_html, ENT_QUOTES, 'UTF-8');
+	$text = preg_replace('/\s+/u', ' ', strip_tags($text));
+	if ($text === '') {
+		return false;
+	}
+
+	$now_end = strtotime(date('Y-m-d 23:59:59'));
+	$patterns = array(
+		'/\b(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\s+\d{1,2},\s+\d{4}\b/i',
+		'/\b(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\s+\d{4}\b/i',
+		'/\b\d{1,2}[\/\-]\d{1,2}[\/\-](?:\d{2}|\d{4})\b/'
+	);
+
+	foreach ($patterns as $pattern) {
+		if (!preg_match_all($pattern, $text, $matches)) {
+			continue;
+		}
+		foreach ($matches[0] as $raw_date) {
+			$ts = strtotime($raw_date);
+			if ($ts !== false && $ts > $now_end) {
+				$future_examples[] = $raw_date;
+			}
+		}
+	}
+
+	return !empty($future_examples);
+}
+}
+
+if (!function_exists('rss_prepare_timeline_evidence')) {
+function rss_prepare_timeline_evidence($details, $permalink = '') {
+	$details_plain = trim(strip_tags(html_entity_decode((string) $details, ENT_QUOTES, 'UTF-8')));
+	$details_plain = preg_replace('/\s+/u', ' ', $details_plain);
+	$evidence_parts = array();
+	if ($details_plain !== '') {
+		$evidence_parts[] = 'Existing article details: ' . $details_plain;
+	}
+
+	$permalink = trim((string) $permalink);
+	if ($permalink !== '' && filter_var($permalink, FILTER_VALIDATE_URL) && function_exists('get_article_data_from_url')) {
+		$fresh = get_article_data_from_url($permalink, '');
+		if (is_array($fresh) && !empty($fresh['details'])) {
+			$fresh_plain = trim(strip_tags(html_entity_decode((string) $fresh['details'], ENT_QUOTES, 'UTF-8')));
+			$fresh_plain = preg_replace('/\s+/u', ' ', $fresh_plain);
+			if ($fresh_plain !== '') {
+				$evidence_parts[] = 'Fresh web source content: ' . $fresh_plain;
+			}
+		}
+	}
+
+	$merged = trim(implode("\n\n", $evidence_parts));
+	if (mb_strlen($merged, 'UTF-8') > 5200) {
+		$merged = mb_substr($merged, 0, 5200, 'UTF-8');
+	}
+
+	return $merged;
+}
+}
+
+if (!function_exists('rss_generate_case_timeline_with_ai')) {
+function rss_generate_case_timeline_with_ai($title, $details, $language, &$error_message = '', $permalink = '') {
+	$title = trim((string) $title);
+	$evidence = rss_prepare_timeline_evidence($details, $permalink);
+	if ($title === '' || $evidence === '') {
+		$error_message = 'Provide title and details before generating timeline.';
+		return false;
+	}
+
+	$current_date = date('F j, Y');
+	$topic = "Create a case timeline update for this missing person report. Title: " . $title . ". Verified evidence: " . $evidence . ". Current date: " . $current_date . ". Output must be in " . $language . ". Rules: use only facts and dates explicitly present in the evidence; do not invent names, events, or dates; never output future dates relative to current date; if a date is uncertain, write 'Date not confirmed'; if no new verified facts exist, explicitly state that there are no new verified updates. Include: (1) h2 heading 'Case Timeline', (2) 4-8 bullet items in chronological order, (3) h2 heading 'Potential New Leads to Verify', (4) a short paragraph with verification guidance.";
+	$generated = rss_generate_article_with_ai($topic, 500, $language, '', $error_message);
+	if ($generated === false || !is_array($generated) || empty($generated['html'])) {
+		if ($error_message === '') {
+			$error_message = 'Timeline generation failed.';
+		}
+		return false;
+	}
+
+	$timeline_html = trim((string) $generated['html']);
+	$future_examples = array();
+	if (rss_timeline_contains_future_dates($timeline_html, $future_examples)) {
+		$error_message = 'Timeline blocked: detected future dates (' . implode(', ', array_slice($future_examples, 0, 3)) . ').';
+		return false;
+	}
+
+	return $timeline_html;
+}
+}
+
 if (!function_exists('rss_save_generated_news_image')) {
 function rss_save_generated_news_image($binary, $prefix, &$error_message = '', $article_id = 0, $is_middle = false) {
 	$binary = (string) $binary;
@@ -658,11 +750,15 @@ $ai_language = isset($_POST['ai_language']) ? trim((string) $_POST['ai_language'
 $ai_required_terms_links = isset($_POST['ai_required_terms_links']) ? trim((string) $_POST['ai_required_terms_links']) : '';
 $ai_image_prompt = isset($_POST['ai_image_prompt']) ? trim((string) $_POST['ai_image_prompt']) : '';
 $ai_generate_images = isset($_POST['ai_generate_images']) ? 1 : 0;
+$ai_timeline_language = isset($_POST['ai_timeline_language']) ? trim((string) $_POST['ai_timeline_language']) : 'English';
 if ($ai_words <= 0) {
 $ai_words = 700;
 }
 if ($ai_language === '') {
 $ai_language = 'Portuguese';
+}
+if ($ai_timeline_language === '') {
+$ai_timeline_language = 'English';
 }
 if (isset($_POST['generate_ai'])) {
 try
@@ -679,6 +775,28 @@ $message = notification('danger','AI generation failed: '.htmlspecialchars($ai_e
 $form_title = $ai_article['title'];
 $form_details = $ai_article['html'];
 $message = notification('success','Draft generated. Review and click Save to publish.');
+}
+}
+}
+catch ( Exception $e )
+{
+echo $e->getMessage() . ' Form ignored.';
+}
+}
+if (isset($_POST['generate_timeline_ai'])) {
+try
+{
+NoCSRF::check('news_token', $_POST, true, 60*10, true );
+if (trim($form_title) === '' || trim($form_details) === '') {
+$message = notification('warning','Fill title and details first, then generate AI timeline.');
+} else {
+$timeline_error = '';
+$timeline_html = rss_generate_case_timeline_with_ai($form_title, $form_details, $ai_timeline_language, $timeline_error);
+if ($timeline_html === false) {
+$message = notification('danger','AI timeline generation failed: '.htmlspecialchars($timeline_error,ENT_QUOTES));
+} else {
+$form_details = trim((string) $form_details) . "\n\n<hr />\n" . $timeline_html;
+$message = notification('success','AI timeline draft appended to details. Review and click Save to publish.');
 }
 }
 }
@@ -922,6 +1040,22 @@ $news_token = NoCSRF::generate('news_token');
 			<textarea class="form-control wysiwyg" name="details" id="details" rows="15" ><?php echo htmlspecialchars($form_details,ENT_QUOTES); ?></textarea>
 		  </div>
 		  <div class="form-group">
+			<div class="row">
+			  <div class="col-sm-4">
+				<label for="ai_timeline_language">AI Timeline Language</label>
+				<select class="form-control" name="ai_timeline_language" id="ai_timeline_language">
+				  <option value="English" <?php if ($ai_timeline_language == 'English') {echo 'SELECTED';} ?>>English</option>
+				  <option value="Portuguese" <?php if ($ai_timeline_language == 'Portuguese') {echo 'SELECTED';} ?>>Portuguese</option>
+				  <option value="Spanish" <?php if ($ai_timeline_language == 'Spanish') {echo 'SELECTED';} ?>>Spanish</option>
+				</select>
+			  </div>
+			  <div class="col-sm-4" style="margin-top:24px;">
+				<button type="submit" name="generate_timeline_ai" class="btn btn-warning btn-block">Add AI Timeline</button>
+			  </div>
+			</div>
+			<p class="help-block">Generates a chronological timeline and suggested verification leads using the current title and details.</p>
+		  </div>
+		  <div class="form-group">
 			<input type="checkbox" name="published" id="published" value="1" <?php if ($form_published == 1) {echo 'CHECKED';} ?> /> <span class="checkbox-label">Publish Article ?</span>
 		  </div>
 			<input type="hidden" name="news_token" id="news_token" value="<?php echo $news_token; ?>" />
@@ -1001,6 +1135,42 @@ $news_token = NoCSRF::generate('news_token');
 break;
 case 'edit':
 $id = abs(intval(make_safe(xss_clean($_GET['id']))));
+$ai_timeline_language = isset($_POST['ai_timeline_language']) ? trim((string) $_POST['ai_timeline_language']) : 'English';
+if ($ai_timeline_language === '') {
+$ai_timeline_language = 'English';
+}
+if (isset($_POST['generate_timeline_ai'])) {
+try
+{
+NoCSRF::check('news_token', $_POST, true, 60*10, true );
+$timeline_title = isset($_POST['title']) ? (string) $_POST['title'] : '';
+$timeline_details = isset($_POST['details']) ? (string) $_POST['details'] : '';
+$timeline_permalink = '';
+$timeline_source_q = $mysqli->query("SELECT permalink FROM news WHERE id='" . intval($id) . "' LIMIT 1");
+if ($timeline_source_q && $timeline_source_q->num_rows > 0) {
+	$timeline_source_row = $timeline_source_q->fetch_assoc();
+	if (isset($timeline_source_row['permalink'])) {
+		$timeline_permalink = trim((string) $timeline_source_row['permalink']);
+	}
+}
+if (trim($timeline_title) === '' || trim($timeline_details) === '') {
+$message = notification('warning','Fill title and details first, then generate AI timeline.');
+} else {
+$timeline_error = '';
+$timeline_html = rss_generate_case_timeline_with_ai($timeline_title, $timeline_details, $ai_timeline_language, $timeline_error, $timeline_permalink);
+if ($timeline_html === false) {
+$message = notification('danger','AI timeline generation failed: '.htmlspecialchars($timeline_error,ENT_QUOTES));
+} else {
+$_POST['details'] = trim((string) $timeline_details) . "\n\n<hr />\n" . $timeline_html;
+$message = notification('success','AI timeline draft appended to details. Review and click Save to publish changes.');
+}
+}
+}
+catch ( Exception $e )
+{
+echo $e->getMessage() . ' Form ignored.';
+}
+}
 if (isset($_POST['submit'])) {
 try
 {
@@ -1092,6 +1262,10 @@ echo $e->getMessage() . ' Form ignored.';
 $news_token = NoCSRF::generate('news_token');
 $news = $general->news($id);
 $middle_image = rss_find_middle_image($id);
+$edit_title_value = isset($_POST['title']) ? (string) $_POST['title'] : htmlspecialchars_decode($news['title'],ENT_QUOTES);
+$edit_details_value = isset($_POST['details']) ? (string) $_POST['details'] : htmlspecialchars_decode($news['details'],ENT_QUOTES);
+$edit_category_value = isset($_POST['category_id']) ? intval($_POST['category_id']) : intval($news['category_id']);
+$edit_published_value = isset($_POST['published']) ? 1 : intval($news['published']);
 ?>
 			<div class="page-header page-heading">
 				<h1>Edit Article
@@ -1102,7 +1276,7 @@ $middle_image = rss_find_middle_image($id);
 		<form role="form" method="POST" action="" enctype="multipart/form-data">
 		  <div class="form-group">
 			<label for="category">Title <span>*</span></label>
-			<input type="text" class="form-control" name="title" id="title" value="<?php echo htmlspecialchars_decode($news['title'],ENT_QUOTES); ?>" />
+			<input type="text" class="form-control" name="title" id="title" value="<?php echo htmlspecialchars($edit_title_value,ENT_QUOTES); ?>" />
 		  </div>
 		  <div class="form-group">
 			<label for="category_id">Category <span>*</span></label>
@@ -1111,7 +1285,7 @@ $middle_image = rss_find_middle_image($id);
 			$categories = $general->categories('category_order ASC');
 			foreach ($categories AS $category) {
 			?>
-			<option value="<?php echo $category['id']; ?>" <?php if ($news['category_id'] == $category['id']) {echo 'SELECTED';} ?>><?php echo $category['category']; ?></option>
+			<option value="<?php echo $category['id']; ?>" <?php if ($edit_category_value == intval($category['id'])) {echo 'SELECTED';} ?>><?php echo $category['category']; ?></option>
 			<?php			
 			}
 			?>
@@ -1148,10 +1322,26 @@ $middle_image = rss_find_middle_image($id);
 		  </div>
 		  <div class="form-group">
 			<label for="details">Details</label>
-			<textarea class="wysiwyg form-control" name="details" id="details" rows="15" ><?php echo htmlspecialchars_decode($news['details'],ENT_QUOTES); ?></textarea>
+			<textarea class="wysiwyg form-control" name="details" id="details" rows="15" ><?php echo htmlspecialchars($edit_details_value,ENT_QUOTES); ?></textarea>
 		  </div>
 		  <div class="form-group">
-			<input type="checkbox" name="published" id="published" value="1" <?php if ($news['published'] == 1) {echo 'CHECKED';} ?> /> <span class="checkbox-label">Publish Article ?</span>
+			<div class="row">
+			  <div class="col-sm-4">
+				<label for="ai_timeline_language">AI Timeline Language</label>
+				<select class="form-control" name="ai_timeline_language" id="ai_timeline_language">
+				  <option value="English" <?php if ($ai_timeline_language == 'English') {echo 'SELECTED';} ?>>English</option>
+				  <option value="Portuguese" <?php if ($ai_timeline_language == 'Portuguese') {echo 'SELECTED';} ?>>Portuguese</option>
+				  <option value="Spanish" <?php if ($ai_timeline_language == 'Spanish') {echo 'SELECTED';} ?>>Spanish</option>
+				</select>
+			  </div>
+			  <div class="col-sm-4" style="margin-top:24px;">
+				<button type="submit" name="generate_timeline_ai" class="btn btn-warning btn-block">Add AI Timeline</button>
+			  </div>
+			</div>
+			<p class="help-block">Generates a chronological timeline and suggested verification leads from the current case details.</p>
+		  </div>
+		  <div class="form-group">
+			<input type="checkbox" name="published" id="published" value="1" <?php if ($edit_published_value == 1) {echo 'CHECKED';} ?> /> <span class="checkbox-label">Publish Article ?</span>
 		  </div>
 		  <input type="hidden" name="old_thumbnail" value="<?php echo $news['thumbnail']; ?>" />
 			<input type="hidden" name="news_token" id="news_token" value="<?php echo $news_token; ?>" />
@@ -1241,7 +1431,7 @@ $q = make_safe(xss_clean($_GET['q']));
 $published = intval(make_safe(xss_clean($_GET['published'])));
 ?>
 <div class="page-header page-heading">
-	<h1 class="row"><div class="col-md-6"><i class="fa fa-search"></i> Search For <?php echo $q; ?> In <?php if ($published == 1) {echo 'Published';} else {echo 'Deleted';} ?> News</div>
+	<h1 class="row"><div class="col-md-6"><i class="fa fa-search"></i> Search For <?php echo $q; ?> In <?php if ($published == 1) {echo 'Published';} else {echo 'Unpublished';} ?> News</div>
 	<div class="col-md-6">
 	<div class="pull-right search-form">
 	<form method="GET" action="news.php">
@@ -1254,7 +1444,7 @@ $published = intval(make_safe(xss_clean($_GET['published'])));
 	</form>
 	</div>
 	<a href="news.php?case=add" class="btn btn-success pull-right" data-toggle="tooltip" data-placement="top" title="Add New Article"><span class="fa fa-plus"></span></a>
-	<a href="news.php?case=deleted" class="btn btn-danger pull-right" data-toggle="tooltip" data-placement="top" title="Deleted News"><span class="fa fa-trash"></span></a>
+	<a href="news.php?case=deleted" class="btn btn-danger pull-right" data-toggle="tooltip" data-placement="top" title="Unpublished News"><span class="fa fa-trash"></span></a>
 	<a href="news.php" class="btn btn-default pull-right" data-toggle="tooltip" data-placement="top" title="Published News"><span class="fa fa-newspaper-o"></span></a>
 	</div>
 	</h1>
@@ -1516,7 +1706,7 @@ if (isset($_POST['delete']) AND isset($_POST['id'])) {
 }
 ?>
 <div class="page-header page-heading">
-	<h1 class="row"><div class="col-md-6"><i class="fa fa-trash"></i> Deleted News</div>
+	<h1 class="row"><div class="col-md-6"><i class="fa fa-inbox"></i> Pending Approvals</div>
 	<div class="col-md-6">
 	<div class="pull-right search-form">
 	<form method="GET" action="news.php">
@@ -1542,7 +1732,7 @@ $sqls = "SELECT * FROM news WHERE published='0' ORDER BY id DESC";
 $query = $mysqli->query($sqls);
 $total_records = $query->num_rows;
 if ($total_records == 0) {
-echo notification('warning','There Are No Deleted News.');
+	echo notification('warning','There Are No Unpublished News.');
 } else {
 $pagination = new Pagination();
 $pagination->setLink("?case=deleted&page=%s");
@@ -1587,7 +1777,7 @@ while ($row = $q->fetch_assoc()) {
 <div class="news-actions">
 <div class="row">
 <div class="col-sm-3 col-md-4">
-<button type="submit" name="restore" class="btn btn-success"><span class="fa fa-refresh"></span> Restore</button>
+<button type="submit" name="restore" class="btn btn-success"><span class="fa fa-check"></span> Publish Selected</button>
 <button type="submit" name="delete" class="btn btn-danger"><span class="fa fa-trash"></span> Permanent Delete</button>
 </div>
 <div class="col-sm-9 col-md-8"><?php echo $pagination->create_links(); ?></div>
@@ -1627,7 +1817,7 @@ if (isset($_POST['delete']) AND isset($_POST['id'])) {
 	</form>
 	</div>
 	<a href="news.php?case=add" class="btn btn-success pull-right" data-toggle="tooltip" data-placement="top" title="Add New Article"><span class="fa fa-plus"></span></a>
-	<a href="news.php?case=deleted" class="btn btn-danger pull-right" data-toggle="tooltip" data-placement="top" title="Deleted News"><span class="fa fa-trash"></span></a>
+	<a href="news.php?case=deleted" class="btn btn-danger pull-right" data-toggle="tooltip" data-placement="top" title="Unpublished News"><span class="fa fa-trash"></span></a>
 	</div>
 	</h1>
 </div>
