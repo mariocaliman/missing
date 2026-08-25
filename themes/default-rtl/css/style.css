@@ -1506,14 +1506,56 @@ padding-top:2px;
 }
 .seen-person-link {
 display:block;
-font-size:15px;
-font-weight:700;
-line-height:1.32;
+font-size:18px;
+font-weight:800;
+line-height:1.22;
 color:#111;
 }
 .seen-person-link:hover,
 .seen-person-link:focus {
 text-decoration:none;
+}
+.seen-person-actions {
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:7px;
+margin-top:10px;
+}
+.seen-person-btn {
+display:block;
+padding:7px 8px;
+border-radius:8px;
+font-size:11px;
+font-weight:800;
+line-height:1.2;
+text-align:center;
+text-transform:uppercase;
+letter-spacing:.03em;
+white-space:nowrap;
+text-decoration:none;
+}
+.seen-person-btn:hover,
+.seen-person-btn:focus {
+text-decoration:none;
+}
+.seen-person-btn-tip {
+background:#cf1f2e;
+color:#fff;
+}
+.seen-person-btn-tip:hover,
+.seen-person-btn-tip:focus {
+background:#b41926;
+color:#fff;
+}
+.seen-person-btn-print {
+background:#f2f5f8;
+border:1px solid #dfe6ee;
+color:#1e2f45;
+}
+.seen-person-btn-print:hover,
+.seen-person-btn-print:focus {
+background:#e9eef4;
+color:#15253a;
 }
 .seen-person-meta {
 margin-top:8px;
@@ -1522,6 +1564,9 @@ margin-top:8px;
 @media only screen and (max-width: 1199px) {
 .seen-person-widget .seen-person-title {
 font-size:14px;
+}
+.seen-person-link {
+font-size:16px;
 }
 .seen-person-media {
 flex-basis:102px;

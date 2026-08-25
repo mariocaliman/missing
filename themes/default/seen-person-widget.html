@@ -13,6 +13,10 @@
 </div>
 <div class="seen-person-copy">
 <a class="seen-person-link" href="./news/{$case.id}/{$case.title|html_decode|slug}">{$case.title|html_decode|truncate:72}</a>
+<div class="seen-person-actions">
+<a class="seen-person-btn seen-person-btn-tip" href="./submit-tip.php?news_id={$case.id}&missingName={$case.title|html_decode|escape:'url'}">Submit a Tip</a>
+<a class="seen-person-btn seen-person-btn-print" href="./print-poster.php?id={$case.id}" target="_BLANK">Print Poster</a>
+</div>
 <div class="seen-person-meta">
 <span class="news-time"><i class="fa fa-clock-o"></i>{$case.datetime|get_since}</span>
 </div>
