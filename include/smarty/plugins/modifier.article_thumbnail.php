@@ -52,6 +52,11 @@ function smarty_modifier_article_thumbnail($thumbnail, $source_id, $additional_c
             return '';
         }
 
+        $parts = @parse_url($url);
+        if ($parts && isset($parts['scheme']) && strtolower($parts['scheme']) === 'http') {
+            $url = 'https://' . ltrim(substr($url, 7), '/');
+        }
+
         $alt = trim((string) $alt_text);
         if ($alt === '') {
             $alt = $fallback_alt;
