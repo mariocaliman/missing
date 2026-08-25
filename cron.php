@@ -93,6 +93,247 @@ function get_runtime_option($name, $default = '')
 	return (string) $row['option_value'];
 }
 
+function get_ai_runtime_option($name, $default = '')
+{
+	global $options;
+	$env_name = strtoupper((string) $name);
+	$env_value = getenv($env_name);
+	if ($env_value !== false && trim((string) $env_value) !== '') {
+		return trim((string) $env_value);
+	}
+
+	if (isset($options[$name]) && trim((string) $options[$name]) !== '') {
+		return trim((string) $options[$name]);
+	}
+
+	return (string) $default;
+}
+
+function strip_markdown_fences($text)
+{
+	$text = trim((string) $text);
+	if (strpos($text, '```') === 0) {
+		$text = preg_replace('/^```(?:html|markdown|md|text)?\s*/i', '', $text);
+		$text = preg_replace('/\s*```\s*$/', '', $text);
+	}
+	return trim((string) $text);
+}
+
+function generate_timeline_with_ai_for_cron($title, $details, $language, &$error_message = '')
+{
+	$title = trim((string) $title);
+	$details_plain = trim(strip_tags(html_entity_decode((string) $details, ENT_QUOTES, 'UTF-8')));
+	$details_plain = preg_replace('/\s+/u', ' ', $details_plain);
+	if ($title === '' || $details_plain === '') {
+		$error_message = 'Missing title or details for timeline generation.';
+		return false;
+	}
+
+	if (mb_strlen($details_plain, 'UTF-8') > 4000) {
+		$details_plain = mb_substr($details_plain, 0, 4000, 'UTF-8');
+	}
+
+	$api_key = get_ai_runtime_option('openai_api_key', '');
+	if ($api_key === '') {
+		if (isset($GLOBALS['ai_config']['api_key']) && trim((string) $GLOBALS['ai_config']['api_key']) !== '') {
+			$api_key = trim((string) $GLOBALS['ai_config']['api_key']);
+		}
+	}
+	if ($api_key === '') {
+		$error_message = 'OpenAI API key is not configured.';
+		return false;
+	}
+
+	$model = get_ai_runtime_option('openai_model', '');
+	if ($model === '' && isset($GLOBALS['ai_config']['model']) && trim((string) $GLOBALS['ai_config']['model']) !== '') {
+		$model = trim((string) $GLOBALS['ai_config']['model']);
+	}
+	if ($model === '') {
+		$model = 'gpt-4o-mini';
+	}
+
+	$endpoint = get_ai_runtime_option('openai_base_url', '');
+	if ($endpoint === '' && isset($GLOBALS['ai_config']['base_url']) && trim((string) $GLOBALS['ai_config']['base_url']) !== '') {
+		$endpoint = trim((string) $GLOBALS['ai_config']['base_url']);
+	}
+	if ($endpoint === '') {
+		$endpoint = 'https://api.openai.com/v1/chat/completions';
+	}
+
+	$messages = array(
+		array(
+			'role' => 'system',
+			'content' => 'You are an investigative newsroom assistant. Return valid HTML only. No markdown fences.'
+		),
+		array(
+			'role' => 'user',
+			'content' => "Create a case timeline update for this missing person report in {$language}. Title: {$title}. Source details: {$details_plain}. Include: (1) h2 heading 'Case Timeline', (2) 4-8 bullet items in chronological order, (3) h2 heading 'Potential New Leads to Verify', and (4) a short paragraph with verification guidance. Use cautious language when details are uncertain and avoid inventing specific names or addresses."
+		)
+	);
+
+	$payload = array(
+		'model' => $model,
+		'messages' => $messages,
+		'temperature' => 0.4
+	);
+
+	$ch = curl_init($endpoint);
+	if ($ch === false) {
+		$error_message = 'Could not initialize cURL.';
+		return false;
+	}
+
+	curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+	curl_setopt($ch, CURLOPT_POST, true);
+	curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+		'Content-Type: application/json',
+		'Authorization: Bearer ' . $api_key
+	));
+	curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
+	curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 15);
+	curl_setopt($ch, CURLOPT_TIMEOUT, 90);
+
+	$response = curl_exec($ch);
+	$curl_error = curl_error($ch);
+	$http_code = intval(curl_getinfo($ch, CURLINFO_HTTP_CODE));
+	curl_close($ch);
+
+	if ($response === false) {
+		$error_message = 'AI request failed: ' . $curl_error;
+		return false;
+	}
+
+	$data = json_decode($response, true);
+	if (!is_array($data)) {
+		$error_message = 'AI returned an invalid response.';
+		return false;
+	}
+
+	if ($http_code >= 400) {
+		$api_error = '';
+		if (isset($data['error']['message'])) {
+			$api_error = (string) $data['error']['message'];
+		}
+		$error_message = 'AI API error (' . $http_code . '): ' . $api_error;
+		return false;
+	}
+
+	$content = '';
+	if (isset($data['choices'][0]['message']['content'])) {
+		$content = (string) $data['choices'][0]['message']['content'];
+	}
+	$content = strip_markdown_fences($content);
+	if ($content === '') {
+		$error_message = 'AI returned empty timeline content.';
+		return false;
+	}
+
+	return $content;
+}
+
+function append_timeline_to_article_details($existing_details_encoded, $timeline_html)
+{
+	$existing_decoded = htmlspecialchars_decode((string) $existing_details_encoded, ENT_QUOTES);
+	$existing_decoded = trim((string) $existing_decoded);
+	$timeline_html = trim((string) $timeline_html);
+	if ($timeline_html === '') {
+		return (string) $existing_details_encoded;
+	}
+
+	$stamp = date('F j, Y');
+	$timeline_block = '<hr />' . "\n" . '<p><strong>Timeline Updated: ' . $stamp . '</strong></p>' . "\n" . $timeline_html;
+	if ($existing_decoded !== '') {
+		$merged = $existing_decoded . "\n\n" . $timeline_block;
+	} else {
+		$merged = $timeline_block;
+	}
+
+	return htmlspecialchars($merged, ENT_QUOTES);
+}
+
+function run_daily_timeline_updates($daily_limit = 2)
+{
+	global $mysqli;
+
+	$daily_limit = max(1, min(5, intval($daily_limit)));
+	$force_daily = (isset($_GET['timeline_force']) && $_GET['timeline_force'] === '1');
+	$today_key = date('Y-m-d');
+	$last_daily = get_runtime_option('cron_timeline_daily_last_date', '');
+	if (!$force_daily && $last_daily === $today_key) {
+		return array('status' => 'skipped', 'updated' => 0, 'message' => 'Already executed today.');
+	}
+
+	$updated = 0;
+	$attempted = 0;
+	$errors = array();
+	$processed_ids = array();
+
+	$candidates_sql = "SELECT id,title,details FROM news WHERE published='1' AND details<>'' ORDER BY RAND() LIMIT 40";
+	$candidates_q = $mysqli->query($candidates_sql);
+	if (!$candidates_q || $candidates_q->num_rows === 0) {
+		upsert_runtime_option('cron_timeline_daily_last_date', $today_key);
+		upsert_runtime_option('cron_timeline_daily_last_count', '0');
+		upsert_runtime_option('cron_timeline_daily_last_status', 'no_candidates');
+		return array('status' => 'no_candidates', 'updated' => 0, 'message' => 'No published candidates found.');
+	}
+
+	while (($row = $candidates_q->fetch_assoc()) && $updated < $daily_limit) {
+		$article_id = intval($row['id']);
+		if ($article_id <= 0 || isset($processed_ids[$article_id])) {
+			continue;
+		}
+		$processed_ids[$article_id] = 1;
+
+		$title = isset($row['title']) ? (string) $row['title'] : '';
+		$details_encoded = isset($row['details']) ? (string) $row['details'] : '';
+		$plain = trim(strip_tags(html_entity_decode($details_encoded, ENT_QUOTES, 'UTF-8')));
+		if ($plain === '' || mb_strlen($plain, 'UTF-8') < 120) {
+			continue;
+		}
+
+		$attempted++;
+		$timeline_error = '';
+		$timeline_html = generate_timeline_with_ai_for_cron($title, $details_encoded, 'English', $timeline_error);
+		if ($timeline_html === false) {
+			$errors[] = 'article #' . $article_id . ': ' . $timeline_error;
+			continue;
+		}
+
+		$updated_details = append_timeline_to_article_details($details_encoded, $timeline_html);
+		$updated_details_sql = $mysqli->real_escape_string($updated_details);
+		$article_id_sql = intval($article_id);
+		$updated_at = time();
+		$updated_day = date('j', $updated_at);
+		$updated_month = date('n', $updated_at);
+		$updated_year = date('Y', $updated_at);
+		$update_sql = "UPDATE news SET details='" . $updated_details_sql . "', day='" . $updated_day . "', month='" . $updated_month . "', year='" . $updated_year . "' WHERE id='" . $article_id_sql . "' LIMIT 1";
+		if ($mysqli->query($update_sql)) {
+			$updated++;
+		} else {
+			$errors[] = 'article #' . $article_id . ': database update failed';
+		}
+	}
+
+	$status = 'success';
+	if ($updated === 0 && $attempted > 0) {
+		$status = 'failed';
+	} elseif ($updated > 0 && !empty($errors)) {
+		$status = 'partial';
+	}
+
+	upsert_runtime_option('cron_timeline_daily_last_date', $today_key);
+	upsert_runtime_option('cron_timeline_daily_last_count', (string) $updated);
+	upsert_runtime_option('cron_timeline_daily_last_status', $status);
+	upsert_runtime_option('cron_timeline_daily_last_errors', implode(' | ', array_slice($errors, 0, 5)));
+
+	return array(
+		'status' => $status,
+		'updated' => $updated,
+		'attempted' => $attempted,
+		'message' => implode(' | ', array_slice($errors, 0, 3))
+	);
+}
+
 function fetch_remote_binary($url, $timeout = 12)
 {
 	$url = trim((string) $url);
@@ -381,6 +622,22 @@ function check_item_url($permalink,$source_id) {
 
 	if ($cron_debug_mode || PHP_SAPI === 'cli') {
 		echo 'Cron finished. Batch processed: ' . $total_sources . '/' . $total_auto_sources . ' (offset ' . $batch_offset . ', size ' . $batch_size . ').';
+	}
+
+	$timeline_daily_result = run_daily_timeline_updates(2);
+	log_observability_event(
+		'cron_timeline_daily',
+		($timeline_daily_result['status'] === 'success' ? 'info' : (($timeline_daily_result['status'] === 'skipped' || $timeline_daily_result['status'] === 'no_candidates') ? 'info' : 'warning')),
+		'Daily timeline update routine finished.',
+		array(
+			'status' => isset($timeline_daily_result['status']) ? $timeline_daily_result['status'] : 'unknown',
+			'updated' => isset($timeline_daily_result['updated']) ? intval($timeline_daily_result['updated']) : 0,
+			'attempted' => isset($timeline_daily_result['attempted']) ? intval($timeline_daily_result['attempted']) : 0,
+			'details' => isset($timeline_daily_result['message']) ? $timeline_daily_result['message'] : ''
+		)
+	);
+	if (($cron_debug_mode || PHP_SAPI === 'cli') && isset($timeline_daily_result['status'])) {
+		echo ' Timeline daily: ' . $timeline_daily_result['status'] . ' (' . intval($timeline_daily_result['updated']) . ' updated).';
 	}
 
 	if (!empty($options['uptimerobot_heartbeat_url'])) {
