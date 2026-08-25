@@ -2366,6 +2366,34 @@ border-top:1px solid var(--line);
 border-top:0;
 }
 
+/* Sidebar typography harmonization */
+.home-sidebar-col .widget h4,
+.article-sidebar-col .widget h4,
+.home-sidebar-col .widget .section-head h4,
+.article-sidebar-col .widget .section-head h4 {
+font-size:18px;
+font-weight:800;
+line-height:1.2;
+white-space:nowrap;
+overflow:hidden;
+text-overflow:ellipsis;
+}
+.home-sidebar-col .top-news-content a,
+.article-sidebar-col .top-news-content a,
+.home-sidebar-col .related-copy a,
+.article-sidebar-col .related-copy a,
+.home-sidebar-col .links li a,
+.article-sidebar-col .links li a,
+.home-sidebar-col .seen-person-link,
+.article-sidebar-col .seen-person-link {
+display:block;
+font-size:15px;
+line-height:1.35;
+white-space:nowrap;
+overflow:hidden;
+text-overflow:ellipsis;
+}
+
 /* Seen person sidebar widget */
 .seen-person-widget .section-head {
 padding:12px 14px 10px;
@@ -2411,9 +2439,9 @@ padding-top:2px;
 .seen-person-link {
 display:block;
 font-family:'Manrope', sans-serif;
-font-size:18px;
+font-size:15px;
 font-weight:800;
-line-height:1.22;
+line-height:1.35;
 color:var(--text);
 }
 .seen-person-link:hover,
@@ -2471,7 +2499,7 @@ margin-top:8px;
 font-size:14px;
 }
 .seen-person-link {
-font-size:16px;
+font-size:15px;
 }
 .seen-person-media {
 flex-basis:102px;
