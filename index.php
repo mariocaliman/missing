@@ -106,8 +106,7 @@ $weekly_featured_case = 0;
 $seen_people_cases = array();
 if (($mysqli instanceof mysqli) && !$mysqli->connect_errno) {
 	$siteurl = !empty($general_setting['siteurl']) ? $general_setting['siteurl'] : '';
-	$featured_since = time() - (7 * 86400);
-	$featured_sql = "SELECT id,title,thumbnail,source_id,category_id,datetime,hits FROM news WHERE published='1' AND datetime >= " . intval($featured_since) . " ORDER BY hits DESC, id DESC LIMIT 1";
+	$featured_sql = "SELECT id,title,thumbnail,source_id,category_id,datetime,hits FROM news WHERE published='1' AND thumbnail<>'' ORDER BY hits DESC, id DESC LIMIT 1";
 	$featured_query = $mysqli->query($featured_sql);
 	if ($featured_query && $featured_query->num_rows > 0) {
 		$weekly_featured_case = $featured_query->fetch_assoc();
@@ -117,11 +116,16 @@ if (($mysqli instanceof mysqli) && !$mysqli->connect_errno) {
 			$weekly_featured_case = $fallback_featured_query->fetch_assoc();
 		}
 	}
+	$featured_case_id = (is_array($weekly_featured_case) && isset($weekly_featured_case['id'])) ? intval($weekly_featured_case['id']) : 0;
 	if (is_array($weekly_featured_case) && !empty($weekly_featured_case)) {
 		$weekly_featured_case['thumb_url'] = rss_article_thumb_url(isset($weekly_featured_case['thumbnail']) ? $weekly_featured_case['thumbnail'] : '', $siteurl);
 	}
 
-	$seen_sql = "SELECT id,title,thumbnail,source_id,category_id,datetime,hits FROM news WHERE published='1' AND thumbnail<>'' ORDER BY hits DESC, id DESC LIMIT 12";
+	$seen_sql = "SELECT id,title,thumbnail,source_id,category_id,datetime,hits FROM news WHERE published='1' AND thumbnail<>''";
+	if ($featured_case_id > 0) {
+		$seen_sql .= " AND id<>" . $featured_case_id;
+	}
+	$seen_sql .= " ORDER BY RAND() LIMIT 1";
 	$seen_query = $mysqli->query($seen_sql);
 	if ($seen_query && $seen_query->num_rows > 0) {
 		while ($row = $seen_query->fetch_assoc()) {
@@ -129,8 +133,16 @@ if (($mysqli instanceof mysqli) && !$mysqli->connect_errno) {
 			if ($row['thumb_url'] !== '') {
 				$seen_people_cases[] = $row;
 			}
-			if (count($seen_people_cases) >= 1) {
-				break;
+			break;
+		}
+	} elseif ($featured_case_id > 0) {
+		$fallback_seen_sql = "SELECT id,title,thumbnail,source_id,category_id,datetime,hits FROM news WHERE published='1' AND thumbnail<>'' AND id=" . $featured_case_id . " LIMIT 1";
+		$fallback_seen_query = $mysqli->query($fallback_seen_sql);
+		if ($fallback_seen_query && $fallback_seen_query->num_rows > 0) {
+			$fallback_row = $fallback_seen_query->fetch_assoc();
+			$fallback_row['thumb_url'] = rss_article_thumb_url(isset($fallback_row['thumbnail']) ? $fallback_row['thumbnail'] : '', $siteurl);
+			if ($fallback_row['thumb_url'] !== '') {
+				$seen_people_cases[] = $fallback_row;
 			}
 		}
 	}
