@@ -2,6 +2,68 @@
 include(__DIR__ . '/include/config.php');
 include(__DIR__ . '/include/connect.php');
 
+if (!function_exists('rss_is_remote_image_url')) {
+  function rss_is_remote_image_url($value)
+  {
+    $value = trim((string) $value);
+    if ($value === '') {
+      return false;
+    }
+    return filter_var($value, FILTER_VALIDATE_URL) !== false;
+  }
+}
+
+if (!function_exists('rss_normalize_share_image_url')) {
+  function rss_normalize_share_image_url($url)
+  {
+    $url = trim((string) $url);
+    if ($url === '') {
+      return '';
+    }
+
+    $parts = @parse_url($url);
+    if ($parts && isset($parts['scheme']) && strtolower($parts['scheme']) === 'http') {
+      $url = 'https://' . ltrim(substr($url, 7), '/');
+    }
+
+    return $url;
+  }
+}
+
+if (!function_exists('rss_extract_first_image_from_html')) {
+  function rss_extract_first_image_from_html($html, $siteurl = '')
+  {
+    $html = (string) $html;
+    if ($html === '') {
+      return '';
+    }
+
+    if (!preg_match('/<img[^>]+src\s*=\s*["\']([^"\']+)["\']/i', $html, $m)) {
+      return '';
+    }
+
+    $src = trim((string) $m[1]);
+    if ($src === '') {
+      return '';
+    }
+
+    if (rss_is_remote_image_url($src)) {
+      return rss_normalize_share_image_url($src);
+    }
+
+    $siteurl = rtrim((string) $siteurl, '/');
+    if ($siteurl === '') {
+      return '';
+    }
+
+    if ($src[0] !== '/') {
+      $src = '/' . $src;
+    }
+
+    return $siteurl . $src;
+  }
+}
+
 if (!($mysqli instanceof mysqli) || $mysqli->connect_errno) {
     exit('Database unavailable.');
 }
@@ -24,11 +86,29 @@ if (!$article) {
 
 $title = html_entity_decode((string) $article['title'], ENT_QUOTES, 'UTF-8');
 $details = html_entity_decode((string) $article['details'], ENT_QUOTES, 'UTF-8');
+$rawDetailsHtml = (string) $article['details'];
 $details = trim(strip_tags($details));
 $details = preg_replace('/\s+/u', ' ', $details);
 $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
 $host = isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : 'localhost';
+$siteurl = $scheme . '://' . $host;
 $posterUrl = $scheme . '://' . $host . '/news/' . $article['id'];
+
+$posterImageUrl = '';
+if (!empty($article['thumbnail'])) {
+  if (rss_is_remote_image_url($article['thumbnail'])) {
+    $posterImageUrl = rss_normalize_share_image_url($article['thumbnail']);
+  } else {
+    $localPath = __DIR__ . '/upload/news/' . $article['thumbnail'];
+    if (is_file($localPath)) {
+      $posterImageUrl = 'upload/news/' . $article['thumbnail'];
+    }
+  }
+}
+
+if ($posterImageUrl === '') {
+  $posterImageUrl = rss_extract_first_image_from_html($rawDetailsHtml, $siteurl);
+}
 ?>
 <!DOCTYPE html>
 <html>
@@ -66,8 +146,8 @@ body{font-family:Arial,Helvetica,sans-serif;background:#f2f5f9;margin:0;padding:
     <h1><?php echo htmlspecialchars($title, ENT_QUOTES, 'UTF-8'); ?></h1>
     <div class="poster-grid">
       <div class="poster-photo">
-      <?php if (!empty($article['thumbnail']) && file_exists(__DIR__ . '/upload/news/' . $article['thumbnail'])) { ?>
-      <img src="upload/news/<?php echo htmlspecialchars($article['thumbnail'], ENT_QUOTES, 'UTF-8'); ?>" alt="<?php echo htmlspecialchars($title, ENT_QUOTES, 'UTF-8'); ?>">
+      <?php if (!empty($posterImageUrl)) { ?>
+      <img src="<?php echo htmlspecialchars($posterImageUrl, ENT_QUOTES, 'UTF-8'); ?>" alt="<?php echo htmlspecialchars($title, ENT_QUOTES, 'UTF-8'); ?>">
       <?php } else { ?>
       <span>Photo Not Available</span>
       <?php } ?>
