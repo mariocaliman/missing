@@ -1,0 +1,22 @@
+{if isset($seen_people_cases) AND $seen_people_cases neq 0}
+<div class="widget seen-person-widget section-box">
+<div class="section-head">
+<h4>Have You Seen This Person?</h4>
+</div>
+<ul class="related-news-grid latest-news-grid">
+{foreach from=$seen_people_cases item=case}
+<li class="related-item">
+<div class="related-media">
+<a href="./news/{$case.id}/{$case.title|html_decode|slug}">
+<img src="{$case.thumb_url}" class="img-responsive" alt="{$case.title|html_decode}" loading="lazy" decoding="async" />
+</a>
+</div>
+<div class="related-copy">
+<a href="./news/{$case.id}/{$case.title|html_decode|slug}">{$case.title|html_decode|truncate:62}</a>
+<span class="news-time"><i class="fa fa-clock-o"></i>{$case.datetime|get_since}</span>
+</div>
+</li>
+{/foreach}
+</ul>
+</div>
+{/if}
