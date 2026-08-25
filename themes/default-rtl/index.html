@@ -7,6 +7,7 @@
 {assign var="home_sections" value=0}
 {assign var="home_shown_count" value=0}
 {assign var="home_max_sections" value=10}
+{assign var="weekly_featured_inserted" value=0}
 {if isset($home_categories) AND $home_categories neq 0}
 {assign var="home_loop_categories" value=$home_categories}
 {else}
@@ -84,8 +85,59 @@
 <!-- End Content Advertisement -->
 {/if}
 {/if}
+{if $weekly_featured_inserted eq 0 AND isset($weekly_featured_case) AND $weekly_featured_case neq 0 AND $home_loop_categories[x].category|lower eq 'famous missing persons cases'}
+{assign var="weekly_featured_inserted" value=1}
+<div class="section-box">
+<h4>Case of the Week</h4>
+<div class="first-section-news featured-story">
+<div class="row">
+<div class="col-sm-5 col-xs-4">
+{if !empty($weekly_featured_case.thumb_url)}
+<a href="./news/{$weekly_featured_case.id}/{$weekly_featured_case.title|html_decode|slug}"><img src="{$weekly_featured_case.thumb_url}" class="img-responsive max-width" alt="{$weekly_featured_case.title|html_decode}" loading="lazy" decoding="async" /></a>
+{else}
+<span class="thumb-fallback featured-fallback"><i class="fa fa-file-image-o"></i></span>
+{/if}
+</div>
+<div class="col-sm-7 col-xs-8">
+<a href="./news/{$weekly_featured_case.id}/{$weekly_featured_case.title|html_decode|slug}">{$weekly_featured_case.title|html_decode}</a>
+<div class="article-meta hidden-xs">
+<span><i class="fa fa-clock-o"></i>{$weekly_featured_case.datetime|get_since}</span>
+<span><i class="fa fa-reorder"></i><a href="./category/{$weekly_featured_case.category_id}/{$weekly_featured_case.category_id|get_category|html_decode|slug}">{$weekly_featured_case.category_id|get_category}</a></span>
+<span><i class="fa fa-bar-chart"></i> {$weekly_featured_case.hits}</span>
+</div>
+<p>This case generated the highest engagement this week. Share it to expand visibility.</p>
+</div>
+</div>
+</div>
+</div>
+{/if}
 {/section}
 <!-- End Of Homepage Categories Loop -->
+{if $weekly_featured_inserted eq 0 AND isset($weekly_featured_case) AND $weekly_featured_case neq 0}
+<div class="section-box">
+<h4>Case of the Week</h4>
+<div class="first-section-news featured-story">
+<div class="row">
+<div class="col-sm-5 col-xs-4">
+{if !empty($weekly_featured_case.thumb_url)}
+<a href="./news/{$weekly_featured_case.id}/{$weekly_featured_case.title|html_decode|slug}"><img src="{$weekly_featured_case.thumb_url}" class="img-responsive max-width" alt="{$weekly_featured_case.title|html_decode}" loading="lazy" decoding="async" /></a>
+{else}
+<span class="thumb-fallback featured-fallback"><i class="fa fa-file-image-o"></i></span>
+{/if}
+</div>
+<div class="col-sm-7 col-xs-8">
+<a href="./news/{$weekly_featured_case.id}/{$weekly_featured_case.title|html_decode|slug}">{$weekly_featured_case.title|html_decode}</a>
+<div class="article-meta hidden-xs">
+<span><i class="fa fa-clock-o"></i>{$weekly_featured_case.datetime|get_since}</span>
+<span><i class="fa fa-reorder"></i><a href="./category/{$weekly_featured_case.category_id}/{$weekly_featured_case.category_id|get_category|html_decode|slug}">{$weekly_featured_case.category_id|get_category}</a></span>
+<span><i class="fa fa-bar-chart"></i> {$weekly_featured_case.hits}</span>
+</div>
+<p>This case generated the highest engagement this week. Share it to expand visibility.</p>
+</div>
+</div>
+</div>
+</div>
+{/if}
 <div class="section-box">
 <h4>Latest News</h4>
 {if $latest_home neq 0}
