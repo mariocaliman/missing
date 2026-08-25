@@ -666,6 +666,15 @@ font-size:22px;
 overflow:hidden;
 color:#555;
 }
+.timeline-updated-label {
+display:inline-block;
+font-size:.58em;
+font-weight:800;
+line-height:1.2;
+color:#cf1f2e;
+white-space:nowrap;
+vertical-align:middle;
+}
 .article-content {
 overflow:hidden;
 padding:15px;

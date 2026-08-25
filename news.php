@@ -53,6 +53,23 @@ function rss_article_seo_description($title, $details, $limit = 160) {
 }
 }
 
+if (!function_exists('rss_has_updated_case_timeline')) {
+function rss_has_updated_case_timeline($details)
+{
+	$details = trim((string) html_entity_decode((string) $details, ENT_QUOTES, 'UTF-8'));
+	if ($details === '') {
+		return 0;
+	}
+
+	$plain = strtolower(preg_replace('/\s+/u', ' ', strip_tags($details)));
+	if ($plain === '') {
+		return 0;
+	}
+
+	return (strpos($plain, 'case timeline') !== false) ? 1 : 0;
+}
+}
+
 if (!function_exists('rss_article_schema_json')) {
 function rss_article_schema_json($article, $article_url, $thumbnail_url, $category_name) {
 	$title = html_entity_decode((string) $article['title'], ENT_QUOTES, 'UTF-8');
@@ -515,6 +532,7 @@ if (is_array($breadcrumb_schema) && isset($breadcrumb_schema['itemListElement'][
 }
 $smarty->assign('article_schema_json',$schema_data['article']);
 $smarty->assign('breadcrumb_schema_json',$schema_data['breadcrumb']);
+$smarty->assign('has_updated_timeline', rss_has_updated_case_timeline($article['details']));
 // display the article HTML 
 $smarty->display('article.html');
 ?>

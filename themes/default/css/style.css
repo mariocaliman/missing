@@ -1752,6 +1752,15 @@ line-height:1.1;
 .case-poster-head h1 a {
 color:#102039;
 }
+.timeline-updated-label {
+display:inline-block;
+font-size:.52em;
+font-weight:800;
+line-height:1.2;
+color:#cf1f2e;
+white-space:nowrap;
+vertical-align:middle;
+}
 .case-action-buttons {
 margin-top:16px;
 display:flex;
