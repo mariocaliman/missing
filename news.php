@@ -70,6 +70,35 @@ function rss_has_updated_case_timeline($details)
 }
 }
 
+if (!function_exists('rss_emphasize_case_timeline_and_dates')) {
+function rss_emphasize_case_timeline_and_dates($text)
+{
+	$text = (string) $text;
+	if ($text === '') {
+		return '';
+	}
+
+	$text = preg_replace('/\b(Case\s+Timeline)\b/i', '<strong>$1</strong>', $text);
+	$text = preg_replace('/\b(Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\s+\d{1,2},\s+\d{4}\b/i', '<strong>$0</strong>', $text);
+	$text = preg_replace('/\b\d{1,2}\/\d{1,2}\/(?:\d{2}|\d{4})\b/', '<strong>$0</strong>', $text);
+
+	return $text;
+}
+}
+
+if (!function_exists('rss_prepare_article_details_for_render')) {
+function rss_prepare_article_details_for_render($details, $source_id)
+{
+	$decoded = htmlspecialchars_decode((string) $details, ENT_QUOTES);
+	if (intval($source_id) !== 0) {
+		$decoded = strip_tags($decoded);
+	}
+
+	$decoded = rss_emphasize_case_timeline_and_dates($decoded);
+	return nl2br($decoded);
+}
+}
+
 if (!function_exists('rss_article_schema_json')) {
 function rss_article_schema_json($article, $article_url, $thumbnail_url, $category_name) {
 	$title = html_entity_decode((string) $article['title'], ENT_QUOTES, 'UTF-8');
@@ -533,6 +562,7 @@ if (is_array($breadcrumb_schema) && isset($breadcrumb_schema['itemListElement'][
 $smarty->assign('article_schema_json',$schema_data['article']);
 $smarty->assign('breadcrumb_schema_json',$schema_data['breadcrumb']);
 $smarty->assign('has_updated_timeline', rss_has_updated_case_timeline($article['details']));
+$smarty->assign('article_details_rendered', rss_prepare_article_details_for_render($article['details'], $article['source_id']));
 // display the article HTML 
 $smarty->display('article.html');
 ?>

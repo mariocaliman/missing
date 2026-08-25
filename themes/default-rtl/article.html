@@ -26,11 +26,7 @@
 </figure>
 {/if}
 <article class="article-content explained-reading-content">
-{if $article_source_id eq 0}
-{$article_details|html_decode|nl2br}
-{else}
-{$article_details|html_decode|strip_tags|nl2br}
-{/if}
+{$article_details_rendered}
 </article>
 {if !empty($article_middle_image)}
 <figure class="explained-inline-media" id="explained-inline-media">
@@ -140,11 +136,7 @@
 <div class="case-content-card">
 <h3>Case Details</h3>
 <div class="article-content">
-{if $article_source_id eq 0}
-{$article_details|html_decode|nl2br}
-{else}
-{$article_details|html_decode|strip_tags|nl2br}
-{/if}
+{$article_details_rendered}
 </div>
 <div class="case-tip-box">
 <h4>Have Information?</h4>
