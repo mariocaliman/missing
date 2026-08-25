@@ -104,6 +104,7 @@ $smarty->assign('latest_home',$latest_home);
 
 $weekly_featured_case = 0;
 $seen_people_cases = array();
+$updated_timeline_cases = array();
 if (($mysqli instanceof mysqli) && !$mysqli->connect_errno) {
 	$siteurl = !empty($general_setting['siteurl']) ? $general_setting['siteurl'] : '';
 	$featured_sql = "SELECT id,title,thumbnail,source_id,category_id,datetime,hits FROM news WHERE published='1' AND thumbnail<>'' ORDER BY hits DESC, id DESC LIMIT 1";
@@ -146,10 +147,20 @@ if (($mysqli instanceof mysqli) && !$mysqli->connect_errno) {
 			}
 		}
 	}
+
+	$timeline_sql = "SELECT id,title,thumbnail,source_id,category_id,datetime,hits FROM news WHERE published='1' AND details LIKE '%Case Timeline%' ORDER BY id DESC LIMIT 6";
+	$timeline_query = $mysqli->query($timeline_sql);
+	if ($timeline_query && $timeline_query->num_rows > 0) {
+		while ($timeline_row = $timeline_query->fetch_assoc()) {
+			$timeline_row['thumb_url'] = rss_article_thumb_url(isset($timeline_row['thumbnail']) ? $timeline_row['thumbnail'] : '', $siteurl);
+			$updated_timeline_cases[] = $timeline_row;
+		}
+	}
 }
 
 $smarty->assign('weekly_featured_case', (is_array($weekly_featured_case) && !empty($weekly_featured_case)) ? $weekly_featured_case : 0);
 $smarty->assign('seen_people_cases', !empty($seen_people_cases) ? $seen_people_cases : 0);
+$smarty->assign('updated_timeline_cases', !empty($updated_timeline_cases) ? $updated_timeline_cases : 0);
 
 $home_categories = array();
 if (($mysqli instanceof mysqli) && !$mysqli->connect_errno && isset($categories) && is_array($categories)) {
