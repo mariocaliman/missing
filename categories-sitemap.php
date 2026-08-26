@@ -36,6 +36,14 @@ $sitemap .= "<lastmod>$today</lastmod>
 <priority>0.8</priority>
 </url>";
 }
+
+$submit_missing_person_url = str_replace(':/','://',str_replace('//','/',($siteurl.'/submit-missing-person')));
+$sitemap .= "<url>";
+$sitemap .= "<loc>$submit_missing_person_url</loc>";
+$sitemap .= "<lastmod>$today</lastmod>
+<changefreq>weekly</changefreq>
+<priority>0.7</priority>
+</url>";
 $sitemap .= "</urlset>";
 echo $sitemap;
 
