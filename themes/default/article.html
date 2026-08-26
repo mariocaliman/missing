@@ -25,71 +25,112 @@
 {$article_details_rendered}
 </article>
 {if !empty($article_middle_image)}
-<figure class="explained-inline-media" id="explained-inline-media">
-<img src="./upload/news/middle/{$article_middle_image}" class="img-responsive max-width" alt="{$article_title|html_decode} supporting image" width="{if isset($middle_image_width) AND $middle_image_width gt 0}{$middle_image_width}{else}1200{/if}" height="{if isset($middle_image_height) AND $middle_image_height gt 0}{$middle_image_height}{else}675{/if}" loading="lazy" decoding="async" />
+<span>Missing Since</span>
+<strong>{$case_profile.missing_since}</strong>
 </figure>
 <script type="text/javascript">
-(function(){
-  function placeInlineMedia() {
+<span>Missing From</span>
+<strong>{$case_profile.missing_from}</strong>
     var content = document.querySelector('.explained-reading-content');
     var media = document.getElementById('explained-inline-media');
-    if (!content || !media) {
-      return;
+<span>Age</span>
+<strong>{if !empty($case_profile.age)}{$case_profile.age}{else}Unknown{/if}</strong>
     }
     var paragraphs = content.querySelectorAll('p');
-    if (paragraphs.length > 1) {
-      var midIndex = Math.floor(paragraphs.length / 2) - 1;
+<span>Gender</span>
+<strong>{if !empty($case_profile.gender)}{$case_profile.gender}{else}Unknown{/if}</strong>
       if (midIndex < 0) {
         midIndex = 0;
-      }
-      paragraphs[midIndex].insertAdjacentElement('afterend', media);
+<span>Case ID</span>
+<strong>{$case_profile.case_reference}</strong>
+</div>
+<div class="fact-item">
+<span>Source</span>
+<strong>{if !empty($case_profile.official_source_url)}<a href="{$case_profile.official_source_url}" target="_blank" rel="noopener">{$case_profile.official_source_label|default:'Original source'}</a>{elseif !empty($article_source_title)}{$article_source_title|html_decode}{else}<a href="./source/{$article_source_id}/{$article_source_id|get_source|html_decode|slug}">{$article_source_id|get_source}</a>{/if}</strong>
     } else {
       content.appendChild(media);
     }
   }
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', placeInlineMedia);
-  } else {
-    placeInlineMedia();
-  }
-})();
-</script>
-{/if}
-<div class="article-share explained-share">
-<!-- ShareThis BEGINS -->
-<div class="sharethis-share-buttons" data-type="inline-share-buttons" data-labels="counts" data-show_total="false">
-<span data-network="facebook"></span>
-<span data-network="twitter"></span>
-<span data-network="sms"></span>
-<span data-network="pinterest"></span>
-<span data-network="whatsapp"></span>
-<span data-network="email"></span>
-<span data-network="sharethis"></span>
-</div>
-<!-- ShareThis ENDS -->
-</div>
+<div class="case-intro-card">
+<h2>{$article_title|html_decode}</h2>
+<div class="case-highlight-list">
+<div class="case-highlight-item"><span>Missing since:</span> <strong>{$case_profile.missing_since}</strong></div>
+<div class="case-highlight-item"><span>Missing from:</span> <strong>{$case_profile.missing_from}</strong></div>
+<div class="case-highlight-item"><span>Age:</span> <strong>{if !empty($case_profile.age)}{$case_profile.age}{else}Unknown{/if}</strong></div>
+<div class="case-highlight-item"><span>Gender:</span> <strong>{if !empty($case_profile.gender)}{$case_profile.gender}{else}Unknown{/if}</strong></div>
+<div class="case-highlight-item"><span>Case ID:</span> <strong>{$case_profile.case_reference}</strong></div>
 <!-- Start Content Advertisement -->
-{if !empty($content_ad)}
 {$content_ad}
+<div class="case-sections">
+<section class="case-section">
+<h3>What we know</h3>
+<div class="article-content case-section-content">
+{if !empty($case_profile.sections.what_we_know)}{$case_profile.sections.what_we_know}{else}{$article_details_rendered}{/if}
+</div>
+</section>
+{if !empty($case_profile.sections.last_known_location)}
+<section class="case-section">
+<h3>Last known location</h3>
+<div class="case-section-content">{$case_profile.sections.last_known_location}</div>
+</section>
+{/if}
+{if !empty($case_profile.sections.physical_description)}
+<section class="case-section">
+<h3>Physical description</h3>
+<div class="case-section-content">{$case_profile.sections.physical_description}</div>
+</section>
+{/if}
+{if !empty($case_profile.sections.clothing_belongings)}
+<section class="case-section">
+<h3>Clothing / belongings</h3>
+<div class="case-section-content">{$case_profile.sections.clothing_belongings}</div>
+</section>
+{/if}
+{if !empty($case_profile.sections.law_enforcement)}
+<section class="case-section">
+<h3>Law enforcement</h3>
+<div class="case-section-content">{$case_profile.sections.law_enforcement}</div>
+</section>
+{/if}
+<section class="case-section">
+<h3>How to provide information</h3>
+<div class="case-section-content">
+{if !empty($case_profile.sections.how_to_provide_information)}{$case_profile.sections.how_to_provide_information}{/if}
+<p>If you have credible information, contact local law enforcement immediately and include the case reference <strong>{$case_profile.case_reference}</strong>.</p>
+<p>You can also <a href="./submit-tip.php?news_id={$article_id}&missingName={$article_title|html_decode|escape:'url'}&img={if !empty($article_thumbnail_src)}{$article_thumbnail_src|escape:'url'}{else}{$article_thumbnail|escape:'url'}{/if}&posterUrl={$article_url|escape:'url'}">submit a tip through this page</a>.</p>
+</div>
+</section>
+{if !empty($case_profile.official_source_url)}
+<section class="case-section">
+<h3>Official source</h3>
+<div class="case-section-content">
+<p><a href="{$case_profile.official_source_url}" target="_blank" rel="noopener">{$case_profile.official_source_label|default:'Open original source'}</a></p>
+</div>
+</section>
+{/if}
+<section class="case-section">
+<h3>Share this case</h3>
+<div class="modern-share case-manual-share" data-copy-link="{$article_url}">
+<p class="share-context">Share verified case information with people who may recognize the person, vehicle, or last known location.</p>
+<div class="share-grid">
+<a class="share-btn" href="{$case_profile.share_links.facebook}" target="_blank" rel="noopener"><i class="fa fa-facebook"></i> Facebook</a>
+<a class="share-btn" href="{$case_profile.share_links.x}" target="_blank" rel="noopener"><i class="fa fa-twitter"></i> X</a>
+<a class="share-btn" href="{$case_profile.share_links.reddit}" target="_blank" rel="noopener"><i class="fa fa-reddit"></i> Reddit</a>
+<a class="share-btn" href="{$case_profile.share_links.whatsapp}" target="_blank" rel="noopener"><i class="fa fa-whatsapp"></i> WhatsApp</a>
+<button type="button" class="share-btn share-copy-btn" data-copy-url="{$article_url}"><i class="fa fa-link"></i> Copy Link</button>
+</div>
+</div>
+</section>
+</div>
 {/if}
 </div>
 </div>
 {else}
 <div class="article-page case-poster-page">
-<div class="case-poster-head">
-<span class="case-label">Missing Child Alert</span>
-<h1>{$article_title|html_decode}{if isset($has_updated_timeline) AND $has_updated_timeline eq 1}<span class="timeline-updated-label"> - Timeline Updated</span>{/if}</h1>
-<p class="case-subtitle">Please review this case carefully and share verified information. Even one detail can make a difference.</p>
-<div class="case-action-buttons">
-<a class="btn btn-danger" href="./submit-tip.php?news_id={$article_id}&missingName={$article_title|html_decode|escape:'url'}&img={if !empty($article_thumbnail_src)}{$article_thumbnail_src|escape:'url'}{else}{$article_thumbnail|escape:'url'}{/if}&posterUrl={$article_url|escape:'url'}">Submit a Tip</a>
-<a class="btn btn-default" href="./print-poster.php?id={$article_id}" target="_BLANK">Print Poster</a>
-<a class="btn btn-default" href="./approved-tips/{$article_id}">Approved Tips</a>
-<a class="btn btn-default" href="./support?subject=Case%20%23{$article_id}%20-%20{$article_title|html_decode|escape:'url'}">Support</a>
-</div>
-</div>
-<div class="case-poster-body">
-<div class="row">
-<div class="col-md-5">
+<div class="row case-poster-row">
+<div class="col-md-5 col-sm-12">
 <div class="case-photo-card">
 {if !empty($article_thumbnail)}
 <div class="case-photo-wrap">
@@ -124,7 +165,7 @@
 </div>
 </div>
 </div>
-<div class="col-md-7">
+<div class="col-md-7 col-sm-12">
 <div class="case-content-card">
 <h2>Case Details</h2>
 <div class="article-content">
@@ -156,7 +197,32 @@
 </div>
 </div>
 </div>
-</div>
+<script type="text/javascript">
+(function(){
+  function bindCopyButtons() {
+    var buttons = document.querySelectorAll('.share-copy-btn');
+    if (!buttons.length) {
+      return;
+    }
+    for (var i = 0; i < buttons.length; i++) {
+      buttons[i].addEventListener('click', function(){
+        var button = this;
+        var url = button.getAttribute('data-copy-url') || window.location.href;
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(url).then(function(){
+            button.innerHTML = '<i class="fa fa-check"></i> Copied';
+          });
+        }
+      });
+    }
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', bindCopyButtons);
+  } else {
+    bindCopyButtons();
+  }
+})();
+</script>
 {/if}
 {if $related neq 0}
 <!-- Related News -->
