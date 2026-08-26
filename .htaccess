@@ -43,6 +43,7 @@ RewriteRule ^approved-tips/?$ approved-tips.php [L,QSA,NC]
 RewriteRule ^approved-tips/([0-9]+)/?$ approved-tips.php?news_id=$1 [L,QSA,NC]
 RewriteRule ^not-found$ notfound.php
 RewriteRule ^rss.xml$ rss.php
+RewriteRule ^sitemap\.xml$ sitemap-index.php
 RewriteRule ^sitemap-(.*).xml$ sitemap.php?id=$1
 RewriteRule ^categories-sitemap.xml$ categories-sitemap.php
 

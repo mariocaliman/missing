@@ -701,6 +701,19 @@ function check_item_url($permalink,$source_id) {
 		echo ' Timeline daily: ' . $timeline_daily_result['status'] . ' (' . intval($timeline_daily_result['updated']) . ' updated).';
 	}
 
+	if (isset($general_setting['siteurl']) && ($total_inserted > 0 || (isset($timeline_daily_result['updated']) && intval($timeline_daily_result['updated']) > 0))) {
+		$sitemap_ping_reports = array();
+		rss_ping_public_sitemaps($general_setting['siteurl'], isset($general_setting['sitemap_items']) ? intval($general_setting['sitemap_items']) : 1000, $sitemap_ping_reports);
+		log_observability_event(
+			'cron_sitemap_ping',
+			'info',
+			'Sitemap ping sent to search engines.',
+			array(
+				'reports' => $sitemap_ping_reports
+			)
+		);
+	}
+
 	if (!empty($options['uptimerobot_heartbeat_url'])) {
 		$heartbeat_ok = ping_uptimerobot_heartbeat($options['uptimerobot_heartbeat_url']);
 		log_observability_event(

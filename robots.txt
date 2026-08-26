@@ -1,4 +1,7 @@
 User-agent: *
 Allow: /
 
+Sitemap: https://missing-usa.com/sitemap.xml
+Sitemap: https://missing-usa.com/categories-sitemap.xml
+
 

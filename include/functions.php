@@ -100,6 +100,120 @@ function get_email_delivery_options()
 	return $options;
 }
 
+function rss_normalize_site_url($siteurl)
+{
+	$siteurl = trim((string) $siteurl);
+	if ($siteurl === '') {
+		return '';
+	}
+	return rtrim(str_replace(':/', '://', str_replace('//', '/', $siteurl)), '/');
+}
+
+function rss_public_sitemap_urls($siteurl, $sitemap_items = 1000)
+{
+	$siteurl = rss_normalize_site_url($siteurl);
+	if ($siteurl === '') {
+		return array();
+	}
+
+	$sitemap_items = max(1, intval($sitemap_items));
+	$urls = array(
+		$siteurl . '/sitemap.xml',
+		$siteurl . '/categories-sitemap.xml'
+	);
+
+	global $mysqli;
+	if ($mysqli instanceof mysqli && !$mysqli->connect_errno) {
+		$count_query = $mysqli->query("SELECT COUNT(*) AS total FROM news WHERE published='1'");
+		if ($count_query && ($count_row = $count_query->fetch_assoc())) {
+			$total_published = intval($count_row['total']);
+			$total_pages = max(1, (int) ceil($total_published / $sitemap_items));
+			for ($page = 1; $page <= $total_pages; $page++) {
+				$urls[] = $siteurl . '/sitemap-' . $page . '.xml';
+			}
+		}
+	}
+
+	return array_values(array_unique($urls));
+}
+
+function rss_ping_remote_url($url)
+{
+	$url = trim((string) $url);
+	if ($url === '' || !filter_var($url, FILTER_VALIDATE_URL)) {
+		return false;
+	}
+
+	if (function_exists('curl_init')) {
+		$ch = curl_init($url);
+		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+		curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+		curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10);
+		curl_setopt($ch, CURLOPT_TIMEOUT, 20);
+		curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (compatible; MissingUSA-SitemapPing/1.0)');
+		$response = curl_exec($ch);
+		$http_code = intval(curl_getinfo($ch, CURLINFO_HTTP_CODE));
+		curl_close($ch);
+		return ($response !== false && $http_code >= 200 && $http_code < 400);
+	}
+
+	$context = stream_context_create(array(
+		'http' => array(
+			'method' => 'GET',
+			'timeout' => 20,
+			'ignore_errors' => true,
+			'header' => "User-Agent: Mozilla/5.0 (compatible; MissingUSA-SitemapPing/1.0)\r\n"
+		)
+	));
+	$response = @file_get_contents($url, false, $context);
+	return $response !== false;
+}
+
+function rss_ping_search_engines_for_sitemap($sitemap_url, &$report = array())
+{
+	$sitemap_url = trim((string) $sitemap_url);
+	$report = array();
+	if ($sitemap_url === '' || !filter_var($sitemap_url, FILTER_VALIDATE_URL)) {
+		return false;
+	}
+
+	$endpoints = array(
+		'google' => 'https://www.google.com/ping?sitemap=' . rawurlencode($sitemap_url),
+		'bing' => 'https://www.bing.com/ping?sitemap=' . rawurlencode($sitemap_url)
+	);
+	$success = false;
+	foreach ($endpoints as $engine => $endpoint) {
+		$ok = rss_ping_remote_url($endpoint);
+		$report[$engine] = $ok ? 'ok' : 'failed';
+		if ($ok) {
+			$success = true;
+		}
+	}
+
+	return $success;
+}
+
+function rss_ping_public_sitemaps($siteurl, $sitemap_items = 1000, &$reports = array())
+{
+	$reports = array();
+	$urls = rss_public_sitemap_urls($siteurl, $sitemap_items);
+	$any_success = false;
+	foreach ($urls as $sitemap_url) {
+		$report = array();
+		$ok = rss_ping_search_engines_for_sitemap($sitemap_url, $report);
+		$reports[] = array(
+			'sitemap' => $sitemap_url,
+			'report' => $report,
+			'success' => $ok ? 1 : 0
+		);
+		if ($ok) {
+			$any_success = true;
+		}
+	}
+
+	return $any_success;
+}
+
 function ensure_email_logs_table()
 {
 	static $checked = false;

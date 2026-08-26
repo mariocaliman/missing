@@ -922,6 +922,10 @@ if (!$is_editorial_category && !empty($middle_upload['name'])) {
 	} else {
 		$message = notification('success','Article Added Successfully.');
 	}
+	if (intval($published) === 1 && isset($general_setting['siteurl'])) {
+		$sitemap_ping_reports = array();
+		rss_ping_public_sitemaps($general_setting['siteurl'], isset($general_setting['sitemap_items']) ? intval($general_setting['sitemap_items']) : 1000, $sitemap_ping_reports);
+	}
 } else {
 $message = notification('danger','Error while saving article: '.htmlspecialchars($mysqli->error,ENT_QUOTES));	
 }
@@ -1248,6 +1252,10 @@ $message = notification('warning','Article edited, but middle image was not save
 } else {
 $message = notification('success','Article Edited Successfully.');
 }
+	if (intval($published) === 1 && isset($general_setting['siteurl'])) {
+		$sitemap_ping_reports = array();
+		rss_ping_public_sitemaps($general_setting['siteurl'], isset($general_setting['sitemap_items']) ? intval($general_setting['sitemap_items']) : 1000, $sitemap_ping_reports);
+	}
 } else {
 $message = notification('danger','Error while saving article: '.htmlspecialchars($mysqli->error,ENT_QUOTES));	
 }
